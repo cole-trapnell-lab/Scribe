@@ -1,0 +1,16 @@
+Package: di
+Type: Package
+Title: Infering Causality from Time-series data
+Version: 0.0.1
+Date: 2016-9-6
+Author: Xiaojie Qiu, Arman Rahimzamani, Cole Trapnell, Sreeram Kannan
+Depends:
+    RANN
+Imports:
+    Rcpp
+LinkingTo: Rcpp, RcppEigen, BH
+Maintainer: Xiaojie Qiu <xqiu@uw.edu>
+Description: Use a novel information estimator to infer the causal interaction between variables in a high-dimensional time series data.
+License: Artistic License 2.0
+RoxygenNote: 5.0.1
+Suggests: testthat

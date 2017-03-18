@@ -1,0 +1,5 @@
+"0","```r
+HSMM_res <- calILRs(HSMM[which(BEAM_res$qval < 0.1), ], trajectory_states = c(1, 2))
+branchtimepoint <- detectBifurcationPoint(HSMM_res) 
+qplot(1:nrow(HSMM_res), abs(branchtimepoint)) #positive / negative corresponding to the enriched branch
+```"

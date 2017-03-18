@@ -1,0 +1,6 @@
+"0","```r
+BEAM_res <- BEAM(HSMM, branch_point=1)
+
+print('Ordered by q-value')
+print(BEAM_res[order(BEAM_res$qval),])
+```"
