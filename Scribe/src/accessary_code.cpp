@@ -144,19 +144,19 @@ double di_single_run_conditioned_cpp(NumericMatrix x, NumericMatrix y, NumericMa
     { // identify the index for the column
       for(k_x = 0; k_x < y_cols; k_x ++)
       {
-      	x_past(i, k_x + j * y_cols) = x(i + j, k_x); // identify the index for the row
-	  }
+        x_past(i, k_x + j * y_cols) = x(i + j, k_x); // identify the index for the row
+    }
       
       for(k_yz = 0; k_yz <= y_cols * (1 + z_rows); k_yz ++)
       {
-      	if(k_yz < y_cols)
-      	{
-      		yz_past(i, k_yz + j * y_cols * (1 + z_rows)) = y(i + j, k_yz);     	
-      	}
-      	else
-      	{ // k_yz / y_cols - 2: row ind; k_yz % (1 + z_rows): column ind 
-      		yz_past(i, k_yz + j * y_cols * (1 + z_rows)) = z((int) k_yz / y_cols - 2, (int) k_yz % (1 + z_rows));     	
-      	}
+        if(k_yz < y_cols)
+        {
+          yz_past(i, k_yz + j * y_cols * (1 + z_rows)) = y(i + j, k_yz);      
+        }
+        else
+        { // k_yz / y_cols - 2: row ind; k_yz % (1 + z_rows): column ind 
+          yz_past(i, k_yz + j * y_cols * (1 + z_rows)) = z((int) k_yz / y_cols - 2, (int) k_yz % (1 + z_rows));       
+        }
       }
     }
   }
@@ -333,7 +333,7 @@ double rdi_single_run(SEXP x, SEXP y, SEXP d)
   calculate the lagged mutual information 
 */
 //-------------------------------------------------------------------------------------------------------------------
-
+// implement multiple run version here 
 double lmi_single_run_cpp(NumericMatrix& x, NumericMatrix& y, int delay) 
 {
   int Nx = x.rows(); int Ny = y.rows(); //int dx = x.cols(); int dy = y.cols(); 
@@ -547,7 +547,14 @@ List calculate_rdi_cpp(NumericMatrix& expr_data, IntegerVector delays, IntegerMa
   
   // Compute RDI in parallel
   int delays_len = delays.length(); 
-  NumericMatrix RDI(n_genes, n_genes * delays_len), expr_1(n_samples, 1), expr_2(n_samples, 1);
+  if(turning_points.length() == n_genes) 
+  {
+    NumericMatrix RDI(n_genes, n_genes); 
+  } else {
+    NumericMatrix RDI(n_genes, n_genes * delays_len);     
+  }
+
+  NumericMatrix expr_1(n_samples, 1), expr_2(n_samples, 1);
   std::fill(RDI.begin(), RDI.end(), 0); //NA_REAL 
   
   // this part maybe slow if we do paralleling because RDI matrix is huge 
@@ -572,6 +579,7 @@ List calculate_rdi_cpp(NumericMatrix& expr_data, IntegerVector delays, IntegerMa
     // if we provide turning_points estimation, we will use that to determine the time delay
     if(turning_points.length() == n_genes) // !Rf_isNull(turning_points)
     {
+      Rcout << "using user provided information about time-delay " << turning_points.length() << std::endl;
       double current_delay = turning_points[i] - turning_points[j];
       if(method == 1)
       {
@@ -1096,14 +1104,14 @@ b <- Sys.time()
 //   {
 //     for(int j(0); j<n_genes; ++j)
 //     {
-//     	for(int k(0); j < delays_len; ++ k)
-//     	{
-//     		if(i == j) 
-//     		{
-//     			RDI[i, i] = 0; 
-//     		}
-// 	    	RDI(i, j + k * n_genes) = rdi_single_run_cpp(expr_data(, i), expr_data(, j), delays[k]); // how to deal with delays include multiple values?
-//     	}
+//      for(int k(0); j < delays_len; ++ k)
+//      {
+//        if(i == j) 
+//        {
+//          RDI[i, i] = 0; 
+//        }
+//        RDI(i, j + k * n_genes) = rdi_single_run_cpp(expr_data(, i), expr_data(, j), delays[k]); // how to deal with delays include multiple values?
+//      }
 //     }
 //   }
 //   
@@ -1121,34 +1129,34 @@ b <- Sys.time()
 // 
 // // [[Rcpp::export]]
 // NumericMatrix calculate_conditioned_rdi_cpp(NumericMatrix expr_data, CharacterMatrix super_graph, 
-// 	NumericMatrix top_k_plus_1_incoming_id, NumericMatrix rdi_res, const int k = 1, const int n_cores, 
-// 	const bool verbsoe = TRUE)
+//  NumericMatrix top_k_plus_1_incoming_id, NumericMatrix rdi_res, const int k = 1, const int n_cores, 
+//  const bool verbsoe = TRUE)
 // {
-// 	if(verbsoe == TRUE) Rcout << "Calculating the conditional restricted direct mutual information for each pair of genes" << std::endl;
-// 	k = min(k, ncol(expr_data) - 2); // minal value k and the column 
+//  if(verbsoe == TRUE) Rcout << "Calculating the conditional restricted direct mutual information for each pair of genes" << std::endl;
+//  k = min(k, ncol(expr_data) - 2); // minal value k and the column 
 // 
-// 	NumericMatrix cRDI_mat(expr_data); 
-// 	for(int i = 0; i < super_graph.nrow(); i ++) 
-// 	{
-// 		NumericVector index_name = super_graph(i, _);
-// 		NumericVector gene_pair = super_graph(i, _); 
-// 		NumericVector top_k_plus_1 = top_k_plus_1_incoming_id(gene_pair[2], ); 
-// 		NumericVector valid_top_k = setdiff(top_k_plus_1, gene_pair[1]); 
+//  NumericMatrix cRDI_mat(expr_data); 
+//  for(int i = 0; i < super_graph.nrow(); i ++) 
+//  {
+//    NumericVector index_name = super_graph(i, _);
+//    NumericVector gene_pair = super_graph(i, _); 
+//    NumericVector top_k_plus_1 = top_k_plus_1_incoming_id(gene_pair[2], ); 
+//    NumericVector valid_top_k = setdiff(top_k_plus_1, gene_pair[1]); 
 // 
-// 		NumericMatrix expr1_t = genes_data(_, index_name[0]); 
-// 		NumericMatrix expr2_t = genes_data(_, index_name[1]); 
-// 		NumericMatrix past; 
-// 		for(int id = 0; id < length(top_k_gene_delay); id ++)
-// 		{
-// 			past = rbind(past, genes_data(_, top_k_plus_1[id])); 
-// 		}
+//    NumericMatrix expr1_t = genes_data(_, index_name[0]); 
+//    NumericMatrix expr2_t = genes_data(_, index_name[1]); 
+//    NumericMatrix past; 
+//    for(int id = 0; id < length(top_k_gene_delay); id ++)
+//    {
+//      past = rbind(past, genes_data(_, top_k_plus_1[id])); 
+//    }
 // 
 //         cRDI_mat(i, j) = cmi(expr1_t, expr2_t, past); 
-// 	}
+//  }
 // 
-// 	// return results
+//  // return results
 // 
-// 	return cRDI_mat; 
+//  return cRDI_mat; 
 // }
 // 
 // 
@@ -1836,32 +1844,166 @@ NumericMatrix calculate_multiple_run_conditioned_rdi_wrap(SEXP expr_data, SEXP s
 
 library(Scribe)
 library(devtools)
-load_all('~/Dropbox (Personal)/Projects/Causal_network/causal_network/Cpp/InformationEstimator/')
+load_all('~/Dropbox (Personal)/Projects/Causal_network/causal_network/Cpp/di-grn/Scribe')
 library(monocle)
 
-  load("/Users/xqiu/Dropbox (Cole Trapnell's Lab)/Monocle 2/first_revision/Monocle2_revision/RData/fig3.RData") # cds data
-  load('/Users/xqiu/Dropbox (Personal)/Projects/Causal_network/causal_network/RData/neuron_network') # network data
-  
-  # neuron_network not exist
-  neuron_network$Type <- c('Neuron', 'Oligo', 'Astro', 'Neuron', 'AO',
-                            'Neuron', 'Neuron', 'Neuron', 'Neuron', "Neuron",
-                            'AO', 'AO', 'Astro', 'Oligo', 'Olig', 'Astro',
-                            'Astro', 'Astro', 'Olig', 'Astro', 'Oligo')
-  
-  #
-  fData(neuron_sim_cds)$gene_short_name <- fData(neuron_sim_cds)$gene_short_names
-  fData(na_sim_cds)$gene_short_name <- fData(na_sim_cds)$gene_short_names
-  
-  gene_name_vec <- c('Pax6', 'Mash1', 'Brn2', 'Zic1', 'Tuj1', 'Hes5', 'Scl', 'Olig2', 'Stat3', 'Myt1L', 'Aldh1L', 'Sox8', 'Mature')
-  
-  debug(rdi_crdi_pseudotime)
-  rdi_crdi_pseudotime_res_list <- rdi_crdi_pseudotime(t(exprs(na_sim_cds)[1:12, 1:200]), window_size = 50) #13 mature gives Na values
+load("/Users/xqiu/Dropbox (Cole Trapnell's Lab)/Monocle 2/first_revision/Monocle2_revision/RData/fig3.RData") # cds data
+load('/Users/xqiu/Dropbox (Personal)/Projects/Causal_network/causal_network/RData/neuron_network') # network data
+
+# neuron_network not exist
+neuron_network$Type <- c('Neuron', 'Oligo', 'Astro', 'Neuron', 'AO',
+                        'Neuron', 'Neuron', 'Neuron', 'Neuron', "Neuron",
+                        'AO', 'AO', 'Astro', 'Oligo', 'Olig', 'Astro',
+                        'Astro', 'Astro', 'Olig', 'Astro', 'Oligo')
+
+#
+fData(neuron_sim_cds)$gene_short_name <- fData(neuron_sim_cds)$gene_short_names
+fData(na_sim_cds)$gene_short_name <- fData(na_sim_cds)$gene_short_names
+
+gene_name_vec <- c('Pax6', 'Mash1', 'Brn2', 'Zic1', 'Tuj1', 'Hes5', 'Scl', 'Olig2', 'Stat3', 'Myt1L', 'Aldh1L', 'Sox8', 'Mature')
+
+debug(rdi_crdi_pseudotime)
+rdi_crdi_pseudotime_res_list <- rdi_crdi_pseudotime(t(exprs(na_sim_cds)[1:12, 1:200]), window_size = 50) #13 mature gives Na values
+ 
+Var2 Var1
+2      0    1
+3      0    2
+4      0    3
+5      0    4
+6      0    5
+7      0    6
+8      0    7
+9      0    8
+10     0    9
+11     0   10
+12     0   11
+13     1    0
+15     1    2
+16     1    3
+17     1    4
+18     1    5
+19     1    6
+20     1    7
+21     1    8
+22     1    9
+23     1   10
+24     1   11
+25     2    0
+26     2    1
+28     2    3
+29     2    4
+30     2    5
+31     2    6
+32     2    7
+33     2    8
+34     2    9
+35     2   10
+36     2   11
+37     3    0
+38     3    1
+39     3    2
+41     3    4
+42     3    5
+43     3    6
+44     3    7
+45     3    8
+46     3    9
+47     3   10
+48     3   11
+49     4    0
+50     4    1
+51     4    2
+52     4    3
+54     4    5
+55     4    6
+56     4    7
+57     4    8
+58     4    9
+59     4   10
+60     4   11
+61     5    0
+62     5    1
+63     5    2
+64     5    3
+65     5    4
+67     5    6
+68     5    7
+69     5    8
+70     5    9
+71     5   10
+72     5   11
+73     6    0
+74     6    1
+75     6    2
+76     6    3
+77     6    4
+78     6    5
+80     6    7
+81     6    8
+82     6    9
+83     6   10
+84     6   11
+85     7    0
+86     7    1
+87     7    2
+88     7    3
+89     7    4
+90     7    5
+91     7    6
+93     7    8
+94     7    9
+95     7   10
+96     7   11
+97     8    0
+98     8    1
+99     8    2
+100    8    3
+101    8    4
+102    8    5
+103    8    6
+104    8    7
+106    8    9
+107    8   10
+108    8   11
+109    9    0
+110    9    1
+111    9    2
+112    9    3
+113    9    4
+114    9    5
+115    9    6
+116    9    7
+117    9    8
+119    9   10
+120    9   11
+121   10    0
+122   10    1
+123   10    2
+124   10    3
+125   10    4
+126   10    5
+127   10    6
+128   10    7
+129   10    8
+130   10    9
+132   10   11
+133   11    0
+134   11    1
+135   11    2
+136   11    3
+137   11    4
+138   11    5
+139   11    6
+140   11    7
+141   11    8
+142   11    9
+143   11   10 
 */
 
 /**
  // run multiple run on the real simulation datasets: 
  
-  
+
  */
 
 
