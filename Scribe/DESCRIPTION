@@ -1,0 +1,33 @@
+Package: Scribe
+Type: Package
+Title: Restricted direction information for network inference 
+Version: 0.1
+Date: 2017-06-09
+Author: ANN Library: David Mount, Sunil Arya (see src/ann_1.1.2/Copyright.txt). 
+	  flann Packge: http://www.cs.ubc.ca/research/flann/.
+	  InformationEstimator: Xiaojie Qiu, Arman Rahimzamani, Sreeram Kannan, Cole Trapnell
+Maintainer: Xiaojie Qiu <xqiut@uw.edu>
+Description: Identifying the causal network for scRNA-seq experiment. Estimates the restricted direction information from one time series to another, where each time series consists of continuous random variables. The restricted direct information is an extension of mutual information which takes into account the direction of information flow, under the assumption that the underlying processes can be described by a first order Markov model. Mutual information is estimated using the Kraskov method, which builds on a nearest-neighbor framework (see package references).
+License: GPL (>= 2) | file LICENSE
+Depends:
+  R (>= 3.0.0),
+  monocle (>= 2.5.0),
+  rEDM (>= 0.5.4),
+  vars (>= 1.5-2),
+  inflection (>= 1.3),
+  plotly (>= 4.6.0),
+  shiny (>= 1.0.3),
+  netbiov (>= 1.8.0),
+  arcdiagram (>= 0.1.11)
+Imports: Rcpp (>= 0.11.6)
+LinkingTo: Rcpp, BH, RcppArmadillo
+URL: http://cole-trapnell-lab.github.io/
+NeedsCompilation: yes
+Repository: CRAN
+Date/Publication: 2017-06-09
+Packaged: 2017-06-09
+RoxygenNote: 6.0.1
+Suggests: testthat,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

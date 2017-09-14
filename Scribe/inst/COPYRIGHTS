@@ -1,0 +1,50 @@
+Transfer Entropy Package
+Version: 1.2
+Release Date: Jan 01, 2016
+----------------------------------------------------------------------------
+Copyright (c) 2015 Max Planck Institute for Informatics and Ghazaleh 
+Haratinezhad Torbati and Glenn Lawyer. All Rights Reserved.
+
+This package uses the ANN - Approximate Nearest Neighbor Library 
+(https://www.cs.umd.edu/~mount/ANN/) for the nearest neighbor search. 
+The ANN software is contained in the folder "src/ann_1.1.2" and is 
+copyright (c) 1997-2010. It is included in this package under the terms 
+of the GNU Lesser Public License as stipulated by the authors of the 
+library in their copyright.
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2 of the License, or (at your
+option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+A copy of the terms and conditions of the license can be found in
+LICENSE or online at
+
+    http://www.gnu.org/copyleft/gpl.html
+
+To obtain a copy, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+---------------------------------------------------------------------
+
+Authors
+-------
+Ghazaleh Haratinezhad Torbati
+Department of Computer Science
+Saarland University
+Campus E1 3, 66123 Saarbrücken, Germany.
+ghazaleh@mpi-inf.mpg.de
+
+Dr. Glenn Lawyer
+Max-Planck-Institut for Informatics
+Computational Biology and Applied Algorithmics
+Campus E1 4, 66123 Saarbrücken, Germany.
+lawyer@mpi-inf.mpg.de
+http://bioinf.mpi-inf.mpg.de/~lawyer
