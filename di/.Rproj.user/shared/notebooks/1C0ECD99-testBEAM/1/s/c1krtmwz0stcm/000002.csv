@@ -1,4 +1,0 @@
-"0","```r
-qplot(pseudotime, pData(HSMM)$Pseudotime)
-cor(pseudotime, pData(HSMM)$Pseudotime)
-```"
