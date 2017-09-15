@@ -370,7 +370,7 @@ createPTS <- function(cds, branch_points = NULL) {
 }
 
 # 
-rdi_crdi_pseudotime <- function(data, window_size = 40, delay = 1) {
+rdi_crdi_pseudotime <- function(data, window_size = 40, delay = 1, verbose = FALSE) {
   win_range <- nrow(data) - window_size - 1
   gene_num <- ncol(data)
   
@@ -385,7 +385,9 @@ rdi_crdi_pseudotime <- function(data, window_size = 40, delay = 1) {
   # .Call('_Scribe_calculate_rdi_multiple_run_cpp', PACKAGE = 'Scribe', expr_data, delays, run_vec, super_graph, turning_points, method)
   
   for(i in 1:(win_range + 1)) {
-    message('current i is ', i)
+    if(verbose)
+     message('current window index is ', i)
+    
     rdi_list <- calculate_rdi_multiple_run_cpp(expr_data = data[i:(i + window_size), ], delay = c(5), run_vec = run_vec[i:(i + window_size)] - 1, super_graph = as.matrix(super_graph), turning_points = 0, method = 1) #* 100 + noise
     con_rdi_res_test <- calculate_multiple_run_conditioned_rdi_wrap(data[i:(i + window_size), ], as.matrix(super_graph), as.matrix(rdi_list$max_rdi_value), as.matrix(rdi_list$max_rdi_delays), run_vec[i:(i + window_size)] - 1, 1)
     

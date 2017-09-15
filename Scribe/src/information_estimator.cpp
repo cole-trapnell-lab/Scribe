@@ -34,19 +34,19 @@ calculate local density
 NumericVector knn_density(NumericMatrix x, NumericMatrix y, int k = 5)
 {
   int dx = x.cols();
-  int N = x.rows();
+  int N = y.rows(); // number of query points
   NumericVector weight(N), density_estimate(N); 
 
   int dimension = N;  // k *
-  Rcpp::NumericVector data_xyz_distances(dimension); 
+  Rcpp::NumericVector data_y_distances(dimension); 
 
   double error_bound = 0.0; int searchtype = 1; int usebdtree = 0; double sqRad = 0.0; // don't use bd tree (usebdtree = 0)
 
-  get_NN_2Set_cpp(x, y, dx, N, N, k, error_bound, searchtype, usebdtree, sqRad, data_xyz_distances); //data_xyz_nn_index,
+  get_NN_2Set_cpp(x, y, dx, N, N, k, error_bound, searchtype, usebdtree, sqRad, data_y_distances); //data_xyz_nn_index,
   
   // NumericVector vd = 0.5 * d * log(M_PI) - log(gamma(0.5 * d + 1)) + log(data_xyz_distances); // 
   // density_estimate = k / (N * exp(vd)); // this is for the L2 norm (the one below is the infinity norm) 
-  density_estimate = k / (N * pow(data_xyz_distances, dx)); 
+  density_estimate = k / (N * pow(data_y_distances, dx)); 
   
   weight = (1 / density_estimate / mean(1 / density_estimate));
   
@@ -346,7 +346,7 @@ double mi_cpp(const NumericMatrix& x, const NumericMatrix& y, int k) //, int nor
     information_samples[i] += digamma_0(k_xy[i]) - digamma_0(cnt_x[i]) - digamma_0(cnt_y[i]);
   }
 
-  NumericVector weight = knn_density(x, k); 
+  NumericVector weight = knn_density(x, x, k); 
   
 	double mi_res = mean(information_samples * weight);//mean(information_samples);
 	return mi_res;
@@ -601,10 +601,24 @@ List cmi_cpp(const NumericMatrix& x, const NumericMatrix& y, NumericMatrix z, in
 
   // return the information_samples and study the relationship between the sample and the pseudotime 
   // NumericVector weight = knn_density(data_xz, k);  // try data_xz
-  NumericVector weight = knn_density(x, k);  // try data_xz
+  NumericVector weight = knn_density(x, x, k);  // try data_xz
   
   double cmi_res = mean(information_samples * weight);//mean(information_samples);
   
+  // test that there is no na or nan values before running knn-graph search 
+  int is_na_tmp = 0;
+  // if(rcpp::is.finite(weight) == false) 
+  // {
+  //   Rcout << "weight is " << weight << std::endl;
+  //   stop("weight is NaN or NA values!");
+  // }
+  if(arma::is_finite(cmi_res) == false) 
+  {
+    Rcout << "weight is " << weight << std::endl;
+    Rcout << "cmi_res is " << cmi_res << std::endl;
+    stop("cmi_res is NaN or NA values!");
+  }
+
 	// double cmi_res = mean(information_samples);
 	// return cmi_res;
   return List::create(Rcpp::Named("cmi_res") = cmi_res, 

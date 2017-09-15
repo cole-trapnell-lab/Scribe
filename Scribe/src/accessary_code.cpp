@@ -547,15 +547,18 @@ List calculate_rdi_cpp(NumericMatrix& expr_data, IntegerVector delays, IntegerMa
   
   // Compute RDI in parallel
   int delays_len = delays.length(); 
+  
+  int RDI_ncols; 
   if(turning_points.length() == n_genes) 
   {
-    NumericMatrix RDI(n_genes, n_genes); 
+    RDI_ncols = n_genes; 
   } else {
-    NumericMatrix RDI(n_genes, n_genes * delays_len);     
+    RDI_ncols = n_genes * delays_len; 
   }
 
-  NumericMatrix expr_1(n_samples, 1), expr_2(n_samples, 1);
+  NumericMatrix RDI(n_genes, RDI_ncols);     
   std::fill(RDI.begin(), RDI.end(), 0); //NA_REAL 
+  NumericMatrix expr_1(n_samples, 1), expr_2(n_samples, 1);
   
   // this part maybe slow if we do paralleling because RDI matrix is huge 
   
@@ -580,7 +583,7 @@ List calculate_rdi_cpp(NumericMatrix& expr_data, IntegerVector delays, IntegerMa
     if(turning_points.length() == n_genes) // !Rf_isNull(turning_points)
     {
       Rcout << "using user provided information about time-delay " << turning_points.length() << std::endl;
-      double current_delay = turning_points[i] - turning_points[j];
+      int current_delay = turning_points[i] - turning_points[j];
       if(method == 1)
       {
         RDI(i, j) = rdi_single_run_cpp(expr_1, expr_2, current_delay); // how to deal with delays include multiple values?
@@ -1317,9 +1320,20 @@ List calculate_rdi_multiple_run_cpp(NumericMatrix& expr_data, IntegerVector dela
   
   // Compute RDI in parallel
   int delays_len = delays.length(); 
-  NumericMatrix RDI(n_genes, n_genes * delays_len), expr_1(n_samples, 1), expr_2(n_samples, 1);
-  std::fill(RDI.begin(), RDI.end(), 0); 
+  NumericMatrix expr_1(n_samples, 1), expr_2(n_samples, 1);
   
+  // RDI(n_genes, n_genes * delays_len),
+  int RDI_ncols;  
+  if(turning_points.length() == n_genes) 
+  {
+    RDI_ncols = n_genes; 
+  } else {
+    RDI_ncols = n_genes * delays_len; 
+  }
+
+  NumericMatrix RDI(n_genes, RDI_ncols);    
+  std::fill(RDI.begin(), RDI.end(), 0); 
+
   // this part maybe slow if we do paralleling because RDI matrix is huge 
   
   int i, j, k; 
@@ -1340,7 +1354,8 @@ List calculate_rdi_multiple_run_cpp(NumericMatrix& expr_data, IntegerVector dela
     // #pragma omp parallel for shared(delays_len, i, j, n_genes, expr_1, expr_2, RDI) private(k) //schedule(dynamic) default(none) //collapse(2) , _
     if(turning_points.length() == n_genes) //!Rf_isNull(turning_points) 
     {
-      double current_delay = turning_points[i] - turning_points[j];
+
+      int current_delay = turning_points[i] - turning_points[j];
       RDI(i, j) = rdi_single_run_multiple_run_cpp(expr_1, expr_2, current_delay, run_vec); // how to deal with delays include multiple values?
       max_rdi_delays(i, j) = current_delay;
     } else {
@@ -1670,7 +1685,7 @@ calculate conditional restricted direction information for all genes in a expres
 NumericMatrix calculate_multiple_run_conditioned_rdi_cpp(NumericMatrix& expr_data, IntegerMatrix& super_graph, 
                                             NumericMatrix& max_rdi_value, IntegerMatrix& max_rdi_delays, IntegerVector run_vec, int k) //, const int cores, const bool verbose
 {
-  Rcout << "max_rdi_value(gene_pair[0], gene_pair[1]) is " << max_rdi_value << std::endl;
+  // Rcout << "max_rdi_value(gene_pair[0], gene_pair[1]) is " << max_rdi_value << std::endl;
   // if(verbose == TRUE) Rcout << "Calculating the conditional restricted direct mutual information for each pair of genes" << std::endl;
   NumericVector k_ncol = NumericVector::create(k, expr_data.cols() - 2); // conditioned at most n - 2 genes (2: two current testing genes)
   k = min(k_ncol); // minal value from k and the column 
@@ -1680,7 +1695,7 @@ NumericMatrix calculate_multiple_run_conditioned_rdi_cpp(NumericMatrix& expr_dat
   IntegerMatrix top_incoming_delays = top_incoming_nodes_delays_list["top_incoming_delays"]; 
   NumericMatrix top_incoming_values = top_incoming_nodes_delays_list["top_incoming_values"];  
 
-  Rcout << "top_incoming_nodes is " << top_incoming_nodes << std::endl;
+  // Rcout << "top_incoming_nodes is " << top_incoming_nodes << std::endl;
 
   int n_genes = expr_data.cols(), n_sample = expr_data.rows(), tau, total_length, id3, delay_id3, current_id_tmp, delay; //tmp: current target  
 
@@ -1704,7 +1719,7 @@ NumericMatrix calculate_multiple_run_conditioned_rdi_cpp(NumericMatrix& expr_dat
     }
     else
     {
-      Rcout << "length of top_k_plus_1 is " << top_k_plus_1.size() << "; k is " << k << std::endl;
+      // Rcout << "length of top_k_plus_1 is " << top_k_plus_1.size() << "; k is " << k << std::endl;
       tmp = top_k_plus_1[k]; // remove the smallest one (k + 1 points in total)
       valid_top_k = setdiff(top_k_plus_1, tmp); 
     }
@@ -1717,7 +1732,7 @@ NumericMatrix calculate_multiple_run_conditioned_rdi_cpp(NumericMatrix& expr_dat
     valid_top_k_in_k_ordered = clone(valid_top_k_in_k).sort();  // sort the index valid_top_k_in_k 
     // Rcout << "after sort " << valid_top_k << "valid_top_k_in_k_ordered " << valid_top_k_in_k_ordered << std::endl; 
     valid_top_k = top_k_plus_1[valid_top_k_in_k_ordered]; 
-    Rcout << "New sort " << valid_top_k << std::endl;
+    // Rcout << "New sort " << valid_top_k << std::endl;
 
     if(valid_top_k.size() < k) 
     { // avoid any weird rare situation (all incoming RDI value are 0)
@@ -1780,7 +1795,7 @@ NumericMatrix calculate_multiple_run_conditioned_rdi_cpp(NumericMatrix& expr_dat
     }
 
     // // // x, y, z, valid_top_k_incoming_delays, delay, run_vec
-    Rcout << "x is (before rdi_multiple_runs_conditioned_cpp) " << x << ", " << x.cols(); 
+    // Rcout << "x is (before rdi_multiple_runs_conditioned_cpp) " << x << ", " << x.cols(); 
     // Rcout << "y is (before rdi_multiple_runs_conditioned_cpp) " << y << ", " << x.cols(); 
     // Rcout << "z is (before rdi_multiple_runs_conditioned_cpp) " << z << ", " << x.cols(); 
     // Rcout << "\n y is (row, column) " << y.rows() << ", " << y.cols(); 
@@ -1790,7 +1805,7 @@ NumericMatrix calculate_multiple_run_conditioned_rdi_cpp(NumericMatrix& expr_dat
     // Rcout << "\n run_vec is " << run_vec << endl; 
 
     cRDI_mat(gene_pair[0], gene_pair[1])  = rdi_multiple_runs_conditioned_cpp(x, y, z, valid_top_k_incoming_delays, delay, run_vec); 
-    Rcout << "after running rdi with gene_pair as " << gene_pair << "the current crDI is" << cRDI_mat(gene_pair[0], gene_pair[1]) << "results is " << std::endl;
+    // Rcout << "after running rdi with gene_pair as " << gene_pair << "the current crDI is" << cRDI_mat(gene_pair[0], gene_pair[1]) << "results is " << std::endl;
   }
   
   // return results
