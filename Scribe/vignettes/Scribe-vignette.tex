@@ -68,7 +68,9 @@
 
 \title{\textsf{\textbf{\thetitle}}}
 \author{Xiaojie Qiu\\[1em]University of Washington,\\ Seattle, Washington, USA\\
-\texttt{xqiu@uw.edu} 
+\texttt{xqiu@uw.edu} \and
+Arman Rahimzamani\\[1em]University of Washington,\\ Seattle, Washington, USA\\
+\texttt{armanrz@uw.edu}
 }
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 \begin{document}
@@ -85,7 +87,7 @@
 \begin{abstract}
 Cellular fate commitment is governed by hierarchical gene regulatory networks. Previous network inference approaches are inherently incapable of resolving complex causal relationships since they are designed for small-scale and static bulk measurements. Here we propose \Rpackage{Scribe}, a toolkit that employs \emph{Direct Information} to reconstruct causal regulatory networks using single-cell RNA-seq data. \Rpackage{Scribe} detects pairs of genes that interact and determines \emph{causality} through strength of \emph{information transfer} from one to the other. Our technique exploits the fact that an upstream regulatory gene's expression changes before its downstream targets undergo coherent changes. To calibrate the expected time lag between upstream and downstream genes, Scribe analyzes single-cell expression kinetics as the cells progress through pseudotime along a cellular trajectory.
 
-\emph{Scribe} outperforms alternative approaches, including \emph{Granger causality} and \emph{cross-convergence mapping} (CCM), across systematic synthetic simulation datasets. Applying \emph{Scribe} to several single-cell RNA-seq datasets spanning diverse biological processes including dendritic cells' response to LPS stimulation and cellular reprogramming, we find that \emph{Scribe} reconstructs networks which are supported by either literature or ChIP-Seq/ATAC-seq datasets. Finally, we use \emph{Scribe} to yield novel insights into the gene regulatory hierarchy of hematopoiesis. We anticipate that \emph{Scrib}e will enable single-cell biologists to reconstruct regulatory networks governing cell lineage differentiation for each of the many cell types in the human body. 
+\emph{Scribe} outperforms alternative approaches, including \emph{Granger causality} and \emph{cross-convergence mapping} (CCM), across systematic synthetic simulation datasets. Applying \emph{Scribe} to several single-cell RNA-seq datasets spanning diverse biological processes including dendritic cells' response to LPS stimulation and cellular reprogramming, we find that \emph{Scribe} reconstructs networks which are supported by either literature or ChIP-Seq/ATAC-seq datasets. Finally, we use \emph{Scribe} to yield novel insights into the gene regulatory hierarchy of hematopoiesis. We anticipate that \emph{Scribe} will enable single-cell biologists to reconstruct regulatory networks governing cell lineage differentiation for each of the many cell types in the human body. 
 % 
 %  For more information on the algorithm at the core of \Rpackage{Scribe}. 
 \end{abstract}
@@ -735,17 +737,17 @@ I(X;Y|Z)=\sum_{x,y,z} p_{XYZ}(x,y,z) \log\frac{p_{XY|Z}(x,y|z)}{p_{X|Z}(x|z)p_{Y
 
 Similarly, the mutual information between $X$ and $Y$ given $Z$ is equal to zero if and only if $X$ and $Y$ are independent given $Z$.
 In general, $X$, $Y$ and $Z$ can be multi-dimensional random variables with arbitrary dimensions, such as in the case that the variables are time-series $\underline{X}^t$, $\underline{Y}^t$ and $\underline{Z}^t$. So the mutual information between the time-series can be defined similarly as $ I(\underline{X}^t,\underline{Y}^t,\underline{Z}^t) $.
-Now the question we might ask ourselves is is it possible to define a measure for the amount of information the past state(s) of $X$ provide about the current state of the variable $Z$ denoted by $Z(t−1)$? [cite: DI paper] provides such a measure called Directed Information, sometimes referred to as "Transfer Entropy" [cite: T. Schreiber, Measuring information transfer," Physical review letters, vol. 85, no. 2, p. 461, 2000]. The directed information from the time-series $\underline{X}^T$ to $\underline{Y}^T$ is defined as:
+Now the question we might ask ourselves is is it possible to define a measure for the amount of information the past state(s) of $X$ provide about the current state of the variable $Z$ denoted by $Z(t-1)$? [cite: DI paper] provides such a measure called Directed Information, sometimes referred to as "Transfer Entropy" [cite: T. Schreiber, Measuring information transfer," Physical review letters, vol. 85, no. 2, p. 461, 2000]. The directed information from the time-series $\underline{X}^T$ to $\underline{Y}^T$ is defined as:
 
 \begin{equation}
-DI(X\rightarrow Y)=\sum_{t=1}^T I(\underline{X}^{t−1}; Y(t)|\underline{Y}^{t−1})
+DI(X\rightarrow Y)=\sum_{t=1}^T I(\underline{X}^{t-1}; Y(t)|\underline{Y}^{t-1})
 \end{equation}
 
 
 The conditioned version of it also can be defined similarly:
 
 \begin{equation}
-DI(X\rightarrow Y|Z)=\sum_{t=1}^T I(\underline{X}^{t−1}; Y(t)|\underline{Y}^{t−1},\underline{Z}^{t−1})
+DI(X\rightarrow Y|Z)=\sum_{t=1}^T I(\underline{X}^{t-11}; Y(t)|\underline{Y}^{t-1},\underline{Z}^{t-1})
 \end{equation}
 
 (Mention the theorem for DI) [Cite DI paper]
@@ -754,13 +756,13 @@ In [Cite DI paper] it is shown that if the system is not purely deterministic, t
 Thus in the case of the first-order Markov systems we introduce an alternate version of DI which employs only the immediate past of the system instead of the whole past samples:
 
 \begin{equation}
-DI(X\rightarrow Y)= I \left( X(t−1); Y(t)|Y(t−1) \right)
+DI(X\rightarrow Y)= I \left( X(t-1); Y(t)|Y(t-1) \right)
 \end{equation}
 
 and the conditioned version of it can be expressed as:
 
 \begin{equation}
-DI(X\rightarrow Y|Z)= I \left( X(t−1); Y(t)|Y(t−1),Z(t−1) \right)
+DI(X\rightarrow Y|Z)= I \left( X(t-1); Y(t)|Y(t-1),Z(t-1) \right)
 \end{equation}
 
 In [Cite: Our Allerton paper] it's shown that this method works in many stochastic or deterministic cases and under some mild assumptions it's capable of inferring the correct graph.
@@ -808,7 +810,7 @@ In [Cite: Our Allerton paper] it's shown that this method works in many stochast
 
  \section{Acknowledgements}
 
-Scribe was originally built by Xiaojie Qiu and Arman Rahimzamani, with substantial design input Cole Trapnell and Sreeram Kannan. We are grateful to all members from Trapnell and Kannan lab, especially XXX for technical assistance, and Andysheh Mohajeri, Jonanthan Packer, XXX etc. for helpful discussions. This work was supported by  US National Institutes of Health (NIH) grants DP2 HD088158 (C.T.) and U54 DK107979 (C.T.), XXXXXX; C.T. is partly supported by a Dale. F. Frey Award for Breakthrough Scientists and an Alfred P. Sloan Foundation Research Fellowship.
+Scribe was written by Xiaojie Qiu which is based on the python package originally developed by Arman Rahimzamani, with substantial design input Cole Trapnell and Sreeram Kannan. The core of Scribe on estimating restricted direction information (RDI) is written in Rcpp for speed accerlationp. We are grateful to all members from Trapnell and Kannan lab, especially XXX for technical assistance, and Andysheh Mohajeri, Jonanthan Packer, XXX etc. for helpful discussions. This work was supported by  US National Institutes of Health (NIH) grants DP2 HD088158 (C.T.) and U54 DK107979 (C.T.), XXXXXX; C.T. is partly supported by a Dale. F. Frey Award for Breakthrough Scientists and an Alfred P. Sloan Foundation Research Fellowship.
 
 This vignette was created from Wolfgang Huber's Bioconductor vignette style document, and patterned after the vignette for \Rpackage{DESeq}, by Simon Anders and Wolfgang Huber.
 
@@ -863,6 +865,6 @@ This vignette was created from Wolfgang Huber's Bioconductor vignette style docu
 \end{knitrout}
 
 \bibliographystyle{unsrt}
-\bibliography{monocle_alg}
+\bibliography{Scribe_alg}
 
 \end{document}

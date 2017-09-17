@@ -19,7 +19,7 @@
 \title{\textsf{\textbf{\thetitle}}}
 \author{Xiaojie Qiu\\[1em]University of Washington,\\ Seattle, Washington, USA\\
 \texttt{xqiu@uw.edu} \and
-Xiaojie Qiu\\[1em]University of Washington,\\ Seattle, Washington, USA\\
+Arman Rahimzamani\\[1em]University of Washington,\\ Seattle, Washington, USA\\
 \texttt{armanrz@uw.edu}
 }
 \begin{document}
@@ -171,27 +171,35 @@ crdi_res <- rdi_crdi_pseudotime_res_list$crdi_res
 dim(rdi_res) <- c(dim(rdi_res)[1], dim(rdi_res)[2] * dim(rdi_res)[2])
 
 all_cmbns <- expand.grid(gene_name_vec[1:12], gene_name_vec[1:12])
-valid_all_cmbns_df <- data.frame(pair = paste(tolower(all_cmbns$Var1), tolower(all_cmbns$Var2), sep = '_'), pval = 0)
+valid_all_cmbns_df <- data.frame(pair = paste((all_cmbns$Var1), (all_cmbns$Var2), sep = ' -> '), pval = 0)
 
 row.names(valid_all_cmbns_df) <- valid_all_cmbns_df$pair
 rdi_res <- as.data.frame(rdi_res)
 colnames(rdi_res) <- valid_all_cmbns_df$pair
 
-valid_all_cmbns_df <- data.frame(pair = paste(tolower(as.character(neuron_network[, 1])), tolower(as.character(neuron_network[, 2])), sep = '_'), pval = 0)
+valid_all_cmbns_df <- data.frame(pair = paste((as.character(neuron_network[, 1])), (as.character(neuron_network[, 2])), sep = ' -> '), pval = 0)
 valid_rdi_res <- rdi_res[, as.character(valid_all_cmbns_df$pair)]
 norm_valid_rdi_res <- apply(valid_rdi_res, 2, function(x) (x - min(x)) / (max(x) - min(x)))
-pheatmap::pheatmap(norm_valid_rdi_res[, ], cluster_rows = F, cluster_cols = F, annotation_names_col = T, border_color = NA)
+pheatmap::pheatmap(t(norm_valid_rdi_res[, ]), cluster_rows = F, cluster_cols = F, annotation_names_row = T, border_color = NA)
+
+valid_all_cmbns_df_back <- data.frame(pair = paste((as.character(neuron_network[, 1])), (as.character(neuron_network[, 2])), sep = ' -> '), pval = 0)
+valid_rdi_res_back <- rdi_res[, as.character(valid_all_cmbns_df_back$pair)]
+norm_valid_rdi_res_back <- apply(valid_rdi_res_back, 2, function(x) (x - min(x)) / (max(x) - min(x)))
+pheatmap::pheatmap(t(norm_valid_rdi_res_back[, ]), cluster_rows = F, cluster_cols = F, annotation_names_row = T, border_color = NA)
 
 # plot crdi_res
 dim(crdi_res) <- c(dim(crdi_res)[1], dim(crdi_res)[2] * dim(crdi_res)[2])
 
-valid_all_cmbns_df <- data.frame(pair = paste(tolower(all_cmbns$Var1), tolower(all_cmbns$Var2), sep = '_'), pval = 0)
+valid_all_cmbns_df <- data.frame(pair = paste((all_cmbns$Var1), (all_cmbns$Var2), sep = ' -> '), pval = 0)
 colnames(crdi_res) <- valid_all_cmbns_df$pair
 
-valid_all_cmbns_df <- data.frame(pair = paste(tolower(as.character(neuron_network[, 1])), tolower(as.character(neuron_network[, 2])), sep = '_'), pval = 0)
+valid_all_cmbns_df <- data.frame(pair = paste((as.character(neuron_network[, 1])), (as.character(neuron_network[, 2])), sep = ' -> '), pval = 0)
 valid_crdi_res <- crdi_res[, as.character(valid_all_cmbns_df$pair)]
 norm_valid_crdi_res <- apply(valid_crdi_res, 2, function(x) (x - min(x)) / (max(x) - min(x)))
-pheatmap::pheatmap(norm_valid_crdi_res, cluster_rows = F, cluster_cols = F, annotation_names_col = T, border_color = NA)
+# norm_valid_crdi_res_ordered <- norm_valid_crdi_res[, order(unlist(apply(norm_valid_crdi_res, 2, which.max)))]
+pheatmap::pheatmap(t(norm_valid_crdi_res[, ]), cluster_rows = F, cluster_cols = F, annotation_names_row = T, border_color = NA)
+
+pheatmap::pheatmap(t(norm_valid_crdi_res[, ]), cluster_rows = F, cluster_cols = F, annotation_names_row = T, border_color = NA)
 
 @ %def
 
@@ -563,17 +571,17 @@ I(X;Y|Z)=\sum_{x,y,z} p_{XYZ}(x,y,z) \log\frac{p_{XY|Z}(x,y|z)}{p_{X|Z}(x|z)p_{Y
 
 Similarly, the mutual information between $X$ and $Y$ given $Z$ is equal to zero if and only if $X$ and $Y$ are independent given $Z$.
 In general, $X$, $Y$ and $Z$ can be multi-dimensional random variables with arbitrary dimensions, such as in the case that the variables are time-series $\underline{X}^t$, $\underline{Y}^t$ and $\underline{Z}^t$. So the mutual information between the time-series can be defined similarly as $ I(\underline{X}^t,\underline{Y}^t,\underline{Z}^t) $.
-Now the question we might ask ourselves is is it possible to define a measure for the amount of information the past state(s) of $X$ provide about the current state of the variable $Z$ denoted by $Z(t−1)$? [cite: DI paper] provides such a measure called Directed Information, sometimes referred to as "Transfer Entropy" [cite: T. Schreiber, Measuring information transfer," Physical review letters, vol. 85, no. 2, p. 461, 2000]. The directed information from the time-series $\underline{X}^T$ to $\underline{Y}^T$ is defined as:
+Now the question we might ask ourselves is is it possible to define a measure for the amount of information the past state(s) of $X$ provide about the current state of the variable $Z$ denoted by $Z(t-1)$? [cite: DI paper] provides such a measure called Directed Information, sometimes referred to as "Transfer Entropy" [cite: T. Schreiber, Measuring information transfer," Physical review letters, vol. 85, no. 2, p. 461, 2000]. The directed information from the time-series $\underline{X}^T$ to $\underline{Y}^T$ is defined as:
 
 \begin{equation}
-DI(X\rightarrow Y)=\sum_{t=1}^T I(\underline{X}^{t−1}; Y(t)|\underline{Y}^{t−1})
+DI(X\rightarrow Y)=\sum_{t=1}^T I(\underline{X}^{t-1}; Y(t)|\underline{Y}^{t-1})
 \end{equation}
 
 
 The conditioned version of it also can be defined similarly:
 
 \begin{equation}
-DI(X\rightarrow Y|Z)=\sum_{t=1}^T I(\underline{X}^{t−1}; Y(t)|\underline{Y}^{t−1},\underline{Z}^{t−1})
+DI(X\rightarrow Y|Z)=\sum_{t=1}^T I(\underline{X}^{t-11}; Y(t)|\underline{Y}^{t-1},\underline{Z}^{t-1})
 \end{equation}
 
 (Mention the theorem for DI) [Cite DI paper]
@@ -582,13 +590,13 @@ In [Cite DI paper] it is shown that if the system is not purely deterministic, t
 Thus in the case of the first-order Markov systems we introduce an alternate version of DI which employs only the immediate past of the system instead of the whole past samples:
 
 \begin{equation}
-DI(X\rightarrow Y)= I \left( X(t−1); Y(t)|Y(t−1) \right)
+DI(X\rightarrow Y)= I \left( X(t-1); Y(t)|Y(t-1) \right)
 \end{equation}
 
 and the conditioned version of it can be expressed as:
 
 \begin{equation}
-DI(X\rightarrow Y|Z)= I \left( X(t−1); Y(t)|Y(t−1),Z(t−1) \right)
+DI(X\rightarrow Y|Z)= I \left( X(t-1); Y(t)|Y(t-1),Z(t-1) \right)
 \end{equation}
 
 In [Cite: Our Allerton paper] it's shown that this method works in many stochastic or deterministic cases and under some mild assumptions it's capable of inferring the correct graph.
@@ -617,6 +625,6 @@ sessionInfo()
 @
 
 \bibliographystyle{unsrt}
-\bibliography{monocle_alg}
+\bibliography{Scribe_alg}
 
 \end{document}

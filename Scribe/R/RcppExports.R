@@ -100,6 +100,31 @@ lmi_single_run <- function(x, y, delay) {
     .Call('_Scribe_lmi_single_run', PACKAGE = 'Scribe', x, y, delay)
 }
 
+lmi_multiple_run_cpp <- function(x, y, d = 1L, run_vec = 0L) {
+    .Call('_Scribe_lmi_multiple_run_cpp', PACKAGE = 'Scribe', x, y, d, run_vec)
+}
+
+#' @title
+#' lmi_multiple_run
+#' @description
+#' This subroutine calculates the lagged mutual information (multiple runs)
+#' 
+#' @param x one random variable from the time-series data
+#' 
+#' @param y another random variable from the time-series data
+#'
+#' @param delay Time lags used to estimate the RDI values  
+#'
+#' @details
+#' \code{cmi} takes two random variable x and y and estimated their mutual information conditioned on the third random variable z
+#' using the KSG estimator. 
+#' It relies on the ANN package to query the kNN with KDTree algorithm. 
+#' @return a numeric value for the condition mutual information estimator between two variables (x, y) conditioned on variable z
+#' @export
+lmi_multiple_run <- function(x, y, d, run_vec) {
+    .Call('_Scribe_lmi_multiple_run', PACKAGE = 'Scribe', x, y, d, run_vec)
+}
+
 #' @title
 #' This function simulates the CONDITIONED DIRECTED mutual information from X to Y CONDITIONED ON Z when you have a SINGLE run of the processes
 #' @description
@@ -135,7 +160,7 @@ calculate_rdi_cpp_wrap <- function(expr_data, delays, super_graph, turning_point
     .Call('_Scribe_calculate_rdi_cpp_wrap', PACKAGE = 'Scribe', expr_data, delays, super_graph, turning_points, method)
 }
 
-extract_top_incoming_nodes_delays <- function(max_rdi_value, max_rdi_delays, k) {
+extract_top_incoming_nodes_delays <- function(max_rdi_value, max_rdi_delays, k = 5L) {
     .Call('_Scribe_extract_top_incoming_nodes_delays', PACKAGE = 'Scribe', max_rdi_value, max_rdi_delays, k)
 }
 
@@ -158,15 +183,15 @@ calculate_conditioned_rdi_cpp_wrap <- function(expr_data, super_graph, max_rdi_v
 #' It's implimented in C++, providing a (small) increase in speed over the R equivalent.
 #' @return a updated matrix with gene expression smoothed with window size equal to window_size
 #' @export
-smooth_gene <- function(expr_data, window_size) {
+smooth_gene <- function(expr_data, window_size = 40L) {
     .Call('_Scribe_smooth_gene', PACKAGE = 'Scribe', expr_data, window_size)
 }
 
-rdi_single_run_multiple_run_cpp <- function(x, y, d, run_vec) {
+rdi_single_run_multiple_run_cpp <- function(x, y, d = 1L, run_vec = 0L) {
     .Call('_Scribe_rdi_single_run_multiple_run_cpp', PACKAGE = 'Scribe', x, y, d, run_vec)
 }
 
-calculate_rdi_multiple_run_cpp <- function(expr_data, delays, run_vec, super_graph, turning_points, method) {
+calculate_rdi_multiple_run_cpp <- function(expr_data, delays, run_vec, super_graph, turning_points = 0L, method = 1L) {
     .Call('_Scribe_calculate_rdi_multiple_run_cpp', PACKAGE = 'Scribe', expr_data, delays, run_vec, super_graph, turning_points, method)
 }
 
@@ -174,7 +199,7 @@ calculate_rdi_multiple_run_cpp_wrap <- function(expr_data, delays, run_vec, supe
     .Call('_Scribe_calculate_rdi_multiple_run_cpp_wrap', PACKAGE = 'Scribe', expr_data, delays, run_vec, super_graph, turning_points, method)
 }
 
-rdi_multiple_runs_conditioned_cpp <- function(x, y, z, z_delays, d, run_vec) {
+rdi_multiple_runs_conditioned_cpp <- function(x, y, z, z_delays, d = 1L, run_vec = 0L) {
     .Call('_Scribe_rdi_multiple_runs_conditioned_cpp', PACKAGE = 'Scribe', x, y, z, z_delays, d, run_vec)
 }
 
@@ -201,7 +226,7 @@ rdi_multiple_runs_conditioned <- function(x, y, z, z_delays, d, run_vec) {
     .Call('_Scribe_rdi_multiple_runs_conditioned', PACKAGE = 'Scribe', x, y, z, z_delays, d, run_vec)
 }
 
-calculate_multiple_run_conditioned_rdi_cpp <- function(expr_data, super_graph, max_rdi_value, max_rdi_delays, run_vec, k) {
+calculate_multiple_run_conditioned_rdi_cpp <- function(expr_data, super_graph, max_rdi_value, max_rdi_delays, run_vec = 0L, k = 5L) {
     .Call('_Scribe_calculate_multiple_run_conditioned_rdi_cpp', PACKAGE = 'Scribe', expr_data, super_graph, max_rdi_value, max_rdi_delays, run_vec, k)
 }
 

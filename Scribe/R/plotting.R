@@ -715,7 +715,8 @@ plot_rdi_pairs <- function(cds_subset, gene_pairs_mat,
                            scales = "free",
                            verbose = FALSE) {
 
-  all_genes_in_pair <- as.vector(as.matrix(gene_pairs_mat))
+  gene_pairs_mat <- as.matrix(gene_pairs_mat)
+  all_genes_in_pair <- as.vector(gene_pairs_mat)
   if(! all(all_genes_in_pair %in% fData(cds_subset)$gene_short_name)) {
     stop("cds_subset doesn't include all genes in gene_pairs_mat Make sure all genes are included in gene_short_name column of the cds")
   }
@@ -777,33 +778,34 @@ plot_rdi_pairs <- function(cds_subset, gene_pairs_mat,
     # 
     ########################################################################################################################################################################
     if(conditioning == T) {
-      # # do a linear line fitting 
+      # # do a linear line fitting
       # df <- data.frame(y = y, z = z)
       # full_model_fit <- VGAM::vglm(as.formula("y~z"), data = df, family=gaussianff())
       # 
       # y <- resid(full_model_fit)
-      data <- Reduce(cbind, list(x, y, z))
       
-      xyz_kde <- kde(data, gridsize = c(25,25, 25))
-      
-      x_meshgrid <- xyz_kde$eval.points[[1]]
-      y_meshgrid <- xyz_kde$eval.points[[2]]
-      z_meshgrid <- xyz_kde$eval.points[[3]]
-      
-      den_res <- matrix(0, nrow = length(x_meshgrid), ncol = length(y_meshgrid))
-      
-      nConBins <- length(z_meshgrid)
-      for(conBins in 1:nConBins) {
-        den_res_tmp <- xyz_kde$estimate[, , conBins]
-        den_res_tmp[!is.finite(den_res_tmp)] <- 0
-        den_res <- den_res + den_res_tmp / (nConBins * sum(den_res_tmp)) 
-      }
-      
-      den_x <- colSums(den_res) # just calculate the sum for each column 
+      # data <- Reduce(cbind, list(x, y, z))
+      # 
+      # xyz_kde <- kde(data, gridsize = c(25,25, 25))
+      # 
+      # x_meshgrid <- xyz_kde$eval.points[[1]]
+      # y_meshgrid <- xyz_kde$eval.points[[2]]
+      # z_meshgrid <- xyz_kde$eval.points[[3]]
+      # 
+      # den_res <- matrix(0, nrow = length(x_meshgrid), ncol = length(y_meshgrid))
+      # 
+      # nConBins <- length(z_meshgrid)
+      # for(conBins in 1:nConBins) {
+      #   den_res_tmp <- xyz_kde$estimate[, , conBins]
+      #   den_res_tmp[!is.finite(den_res_tmp)] <- 0
+      #   den_res <- den_res + den_res_tmp / (nConBins * sum(den_res_tmp)) 
+      # }
+      # 
+      # den_x <- colSums(den_res) # just calculate the sum for each column 
     }
     ########################################################################################################################################################################
-    if(!conditioning) {
-      rng_vec <- quantile(z, seq(0, 1, length.out = nConBins + 1))
+    if(conditioning) {
+      rng_vec <- sort(z)[quantile(1:length(z), seq(0, 1, length.out = nConBins + 1))] #ensure each bin gets the same number of cells 
       den_res_array <- array(0, dim = c(dim_val, dim_val, nConBins))
       den_res <- matrix(0, nrow = dim_val, ncol = dim_val)
       
@@ -837,33 +839,49 @@ plot_rdi_pairs <- function(cds_subset, gene_pairs_mat,
         # message('x_meshgrid is ', x_meshgrid)
         # message('y_meshgrid is ', y_meshgrid)
       }
+      max_ind <- 0
+      tmp <- 0
       for(conBins in 1:(nConBins - 1)) {
-        den_res_tmp <- den_res_array[, , conBins]
-        den_res_tmp[!is.finite(den_res_tmp)] <- 0
-        den_res <- den_res + den_res_tmp / (nConBins * sum(den_res_tmp)) 
+        if(tmp < sum(den_res_array[, , conBins]))
+          max_ind <- conBins
+        
+        tmp <- sum(den_res_array[, , conBins])
+        # den_res_tmp <- den_res_array[, , conBins]
+        # den_res_tmp[!is.finite(den_res_tmp)] <- 0
+        # den_res <- den_res + den_res_tmp / nConBins
+        # den_res <- den_res + den_res_tmp / (nConBins * sum(den_res_tmp)) 
       }
+      den_res <- den_res_array[, , max_ind]
       
       den_x <- rowSums(den_res) # just calculate the sum for each column 
     } else {
-      # bandwidth <- c(MASS::bandwidth.nrd(x), MASS::bandwidth.nrd(y))
-      # if(any(bandwidth == 0)) {
-      #   max_vec <- c(max(x), max(y))
-      #   bandwidth[bandwidth == 0] <- max_vec[bandwidth == 0] / dim_val
-      # }
-      # den_xy <- MASS::kde2d(x, y, n = c(dim_val, dim_val), lims = c(min(x), max(x), min(y), max(y)), h = bandwidth)
-      # den_res <- as.data.frame(den_xy$z)
-      # # dimnames(den_res) <- list(paste0("x_", as.character(den_xy$x)), paste0("y_", as.character(den_xy$y)))
-      # # den_x_res <- density(x, n = round(length(x))/ 4, from = min(x), to = max(x))
-      # # den_x <- den_x_res$y
-      # den_x <- rowSums(den_res) # just calculate the sum for each column 
-      # 
-      # x_meshgrid <- den_xy$x
-      # y_meshgrid <- den_xy$y
+      bandwidth <- c(MASS::bandwidth.nrd(x), MASS::bandwidth.nrd(y))
+      if(any(bandwidth == 0)) {
+        max_vec <- c(max(x), max(y))
+        bandwidth[bandwidth == 0] <- max_vec[bandwidth == 0] / dim_val
+      }
+      den_xy <- MASS::kde2d(x, y, n = c(dim_val, dim_val), lims = c(min(x), max(x), min(y), max(y)), h = bandwidth)
+      den_res <- as.data.frame(den_xy$z)
+      # dimnames(den_res) <- list(paste0("x_", as.character(den_xy$x)), paste0("y_", as.character(den_xy$y)))
+      # den_x_res <- density(x, n = round(length(x))/ 4, from = min(x), to = max(x))
+      # den_x <- den_x_res$y
+      den_x <- rowSums(den_res) # just calculate the sum for each column
+
+      x_meshgrid <- den_xy$x
+      y_meshgrid <- den_xy$y
     }
+    
+    max_ind <- 1
     
     for(i in 1:length(x_meshgrid)) {
       max_val <- max(den_res[i, ] / den_x[i]); min_val <- 0 #min(den_res[i, ] / den_x[i]) # 
-      max_ind <- which.max(den_res[i, ] / den_x[i]) 
+
+      print(den_x)
+      if(den_x[i] == 0) {
+      }
+      else {
+        max_ind <- which.max(den_res[i, ] / den_x[i]) 
+      }
        # message("i is ", i, "j is ", j, "vector is ", c(x_meshgrid[i], y_meshgrid[max_ind], gene_pair_name))
       ridge_curve[i + r_ini_ind, ] <- c(x_meshgrid[i], y_meshgrid[max_ind], gene_pair_name)
       

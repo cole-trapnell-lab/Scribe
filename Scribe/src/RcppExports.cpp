@@ -71,6 +71,34 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// lmi_multiple_run_cpp
+double lmi_multiple_run_cpp(NumericMatrix& x, NumericMatrix& y, int d, IntegerVector run_vec);
+RcppExport SEXP _Scribe_lmi_multiple_run_cpp(SEXP xSEXP, SEXP ySEXP, SEXP dSEXP, SEXP run_vecSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix& >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< int >::type d(dSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type run_vec(run_vecSEXP);
+    rcpp_result_gen = Rcpp::wrap(lmi_multiple_run_cpp(x, y, d, run_vec));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lmi_multiple_run
+double lmi_multiple_run(SEXP x, SEXP y, SEXP d, IntegerVector run_vec);
+RcppExport SEXP _Scribe_lmi_multiple_run(SEXP xSEXP, SEXP ySEXP, SEXP dSEXP, SEXP run_vecSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type y(ySEXP);
+    Rcpp::traits::input_parameter< SEXP >::type d(dSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type run_vec(run_vecSEXP);
+    rcpp_result_gen = Rcpp::wrap(lmi_multiple_run(x, y, d, run_vec));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rdi_single_run_conditioned
 double rdi_single_run_conditioned(SEXP x, SEXP y, SEXP z, SEXP z_delays, SEXP d);
 RcppExport SEXP _Scribe_rdi_single_run_conditioned(SEXP xSEXP, SEXP ySEXP, SEXP zSEXP, SEXP z_delaysSEXP, SEXP dSEXP) {
@@ -384,6 +412,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_Scribe_rdi_many_runs", (DL_FUNC) &_Scribe_rdi_many_runs, 2},
     {"_Scribe_rdi_single_run", (DL_FUNC) &_Scribe_rdi_single_run, 3},
     {"_Scribe_lmi_single_run", (DL_FUNC) &_Scribe_lmi_single_run, 3},
+    {"_Scribe_lmi_multiple_run_cpp", (DL_FUNC) &_Scribe_lmi_multiple_run_cpp, 4},
+    {"_Scribe_lmi_multiple_run", (DL_FUNC) &_Scribe_lmi_multiple_run, 4},
     {"_Scribe_rdi_single_run_conditioned", (DL_FUNC) &_Scribe_rdi_single_run_conditioned, 5},
     {"_Scribe_extract_max_rdi_value_delay", (DL_FUNC) &_Scribe_extract_max_rdi_value_delay, 2},
     {"_Scribe_calculate_rdi_cpp", (DL_FUNC) &_Scribe_calculate_rdi_cpp, 5},

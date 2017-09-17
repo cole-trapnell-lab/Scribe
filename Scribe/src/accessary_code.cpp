@@ -21,7 +21,7 @@ calculate direction information for single run
 // double mi_cpp(double x, double y, double xy, int k = 5, int N)
 // double cmi_cpp(double x, double y, double xyz, double xz, double yz, int k = 5, int N)
 
-double di_single_run_cpp(NumericMatrix& x, NumericMatrix& y, int n = 10)
+double di_single_run_cpp(NumericMatrix& x, NumericMatrix& y, int n = 5)
 {
   
   int x_cols = x.cols(); int y_cols = y.cols();
@@ -114,7 +114,7 @@ calculate conditional direction information for single run
 */
 //-------------------------------------------------------------------------------------------------------------------
 
-double di_single_run_conditioned_cpp(NumericMatrix x, NumericMatrix y, NumericMatrix& z, int n)
+double di_single_run_conditioned_cpp(NumericMatrix x, NumericMatrix y, NumericMatrix& z, int n = 5)
 {
  
   int x_cols = x.cols(), y_cols = y.cols(), z_rows = z.rows();  
@@ -280,7 +280,7 @@ calculate restricted direction information for a single run
 */
 //-------------------------------------------------------------------------------------------------------------------
 
-double rdi_single_run_cpp(NumericMatrix& x, NumericMatrix& y, int d) 
+double rdi_single_run_cpp(NumericMatrix& x, NumericMatrix& y, int d = 1) 
 {
   int Nx = x.rows(); int Ny = y.rows(); //int dx = x.cols(); int dy = y.cols(); 
   
@@ -334,7 +334,7 @@ double rdi_single_run(SEXP x, SEXP y, SEXP d)
 */
 //-------------------------------------------------------------------------------------------------------------------
 // implement multiple run version here 
-double lmi_single_run_cpp(NumericMatrix& x, NumericMatrix& y, int delay) 
+double lmi_single_run_cpp(NumericMatrix& x, NumericMatrix& y, int delay = 1) 
 {
   int Nx = x.rows(); int Ny = y.rows(); //int dx = x.cols(); int dy = y.cols(); 
   
@@ -380,13 +380,153 @@ double lmi_single_run(SEXP x, SEXP y, SEXP delay)
   return lmi_res;
 }
 
+// implement multiple run version here 
+// [[Rcpp::export]]
+double lmi_multiple_run_cpp(NumericMatrix& x, NumericMatrix& y, int d = 1, IntegerVector run_vec = 0) 
+{
+  int Nx = x.rows(); int Ny = y.rows(); int run_len; //int dx = x.cols(); int dy = y.cols(); 
+  
+  if(Nx != Ny)
+  {
+    stop("The number of time samples has to be the same for X and Y");
+    return -1;
+  }
+ 
+  int run_max = max(run_vec); // run_vec: vector to represent the run, need to be just numeric numbers and starts from 0. 
+  NumericMatrix x_0_res, y_0_res, tmp; // matrix passed to cmi function
+  IntegerVector index_all = seq_len(run_vec.size()) - 1, current_run_ind; // cell index from 0 to maximal number of cells; cell index corresponding to current run during iteration 
+  int current_ind = 0; // current initial index for storing new slice of data 
+
+  if(run_max == 0) 
+  {
+    x_0_res = x(Range(0, Nx - d - 1), _); // x should only has 1 colum 
+    y_0_res = y(Range(d, Ny - 1), _);
+  } else {
+
+    // correctly set the dimensionality for the x_0, y_0 and y_1 matrix 
+    int tot_len = Nx - d * (run_max + 1); // number of samples minus the delay times total number of runs 
+
+    mat x_0(tot_len, 1), y_0(tot_len, 1); // arma matrix 
+    
+    uvec pos; // arma uvec 
+    vec vals; // arma vec 
+
+    for(int i = 0; i <= run_max; i++) // concatenate the data 
+    {
+      current_run_ind = index_all[run_vec == i]; // get the cells that belong to a particular run 
+      run_len = current_run_ind.size(); 
+      // Rcout << "current_run_ind is " << current_run_ind << " run_vec is " << run_vec << "run_len is " << run_len << std::endl;
+      if(current_run_ind.size() < d)
+      {
+        stop("Each run has to have more samples than the designated 'delays'");
+        return -1;
+      }
+
+      pos = as<uvec>(wrap(Range(current_ind, current_ind + run_len - d - 1))); 
+      // IntegerVector test_range = Range(0, 3);
+      // Rcout << "\n pos is" << pos << "test_range is " << test_range  << "current_ind is " << current_ind << std::endl; 
+      
+      // assuming x is only one column (Cx, Cy is not used)
+      tmp = x(Range(min(current_run_ind), min(current_run_ind) + run_len - d - 1), Range(0, 0)); //x(Range(1, 2), Range(1, 1));
+      vals = as<vec>(wrap(tmp)); 
+      x_0.elem(pos) = vals; 
+
+      IntegerVector rng_vec = Range(min(current_run_ind), min(current_run_ind) + run_len - d - 1); 
+      for(int test_na = 0; test_na < vals.n_elem; test_na ++) 
+      {
+        if(arma::is_finite(vals[test_na]) == false) 
+        {
+          // Rcout << "identify non-finite values for x_0 here; i is " << i << " rng_vec is " << rng_vec << std::endl; 
+        }
+      }
+
+      // Rcout << "x_0.elem(pos) is" << vals.t() << std::endl; 
+
+      tmp = y(Range(min(current_run_ind) + d, min(current_run_ind) + run_len - 1), Range(0, 0)); //x(Range(1, 2), Range(1, 1));
+      vals = as<vec>(wrap(tmp)); 
+      y_0.elem(pos) = vals; 
+
+      for(int test_na = 0; test_na < vals.n_elem; test_na ++) 
+      {
+        if(arma::is_finite(vals[test_na]) == false) 
+        {
+          Rcout << "identify non-finite values for x_0 here; i is " << i << " rng_vec is " << rng_vec << std::endl; 
+        }
+      }
+
+      // Rcout << "y_0.elem(pos) is" << vals.t() << std::endl; 
+
+      tmp = y(Range(min(current_run_ind) + d - 1, min(current_run_ind) + run_len - 2), Range(0, 0)); //x(Range(1, 2), Range(1, 1));
+      vals = as<vec>(wrap(tmp)); 
+
+      for(int test_na = 0; test_na < vals.n_elem; test_na ++) 
+      {
+        if(arma::is_finite(vals[test_na]) == false) 
+        {
+          Rcout << "identify non-finite values for x_0 here; i is " << i << " rng_vec is " << rng_vec << std::endl; 
+        }
+      }
+
+      // Rcout << "y_1.elem(pos) is" << vals.t() << std::endl; 
+
+      current_ind = current_ind + run_len - d; // move to the the next position after filling the current run (note that there is no - 1)
+    }
+
+    // Rcout << "\n before converting to NumericMatrix " << "x_0 is " << x_0.t() << "y_0" << y_0.t() << "y_1" << y_1.t() << std::endl; 
+
+    x_0_res = as<NumericMatrix>(wrap(x_0)); // this conversion have problems? 
+    y_0_res = as<NumericMatrix>(wrap(y_0));
+    // y_1_res = as<NumericMatrix>(wrap(y_1));
+
+  }  
+  // Rcout << "\n before running mi " << "x_0_res is " << transpose(x_0_res) << "y_0_res" << transpose(y_0_res) << std::endl; 
+
+
+  return mi_cpp(x_0_res, y_0_res);  
+  // NumericMatrix x_0 = x(Range(0, Nx - delay - 1), _);
+  // NumericMatrix y_0 = y(Range(delay, Ny - 1), _);
+  
+  // // Rcout << "\n before running CMI " << std::endl;
+  // return mi_cpp(x_0, y_0); 
+}
+
+//' @title
+//' lmi_multiple_run
+//' @description
+//' This subroutine calculates the lagged mutual information (multiple runs)
+//' 
+//' @param x one random variable from the time-series data
+//' 
+//' @param y another random variable from the time-series data
+//'
+//' @param delay Time lags used to estimate the RDI values  
+//'
+//' @details
+//' \code{cmi} takes two random variable x and y and estimated their mutual information conditioned on the third random variable z
+//' using the KSG estimator. 
+//' It relies on the ANN package to query the kNN with KDTree algorithm. 
+//' @return a numeric value for the condition mutual information estimator between two variables (x, y) conditioned on variable z
+//' @export
+// [[Rcpp::export]]
+double lmi_multiple_run(SEXP x, SEXP y, SEXP d, IntegerVector run_vec) 
+{ 
+  NumericMatrix x_cpp(x); 
+  NumericMatrix y_cpp(y); 
+
+  int d_cpp = as<int>(d); 
+
+  IntegerVector run_vec_cpp(run_vec); 
+
+  double lmi_res = lmi_multiple_run_cpp(x_cpp, y_cpp, d_cpp, run_vec_cpp);
+  return lmi_res;
+}
 //-------------------------------------------------------------------------------------------------------------------
 /*
 calculate conditional restricted direction information for a single run
 */
 //-------------------------------------------------------------------------------------------------------------------
 
-double rdi_single_run_conditioned_cpp(NumericMatrix& x, NumericMatrix& y, NumericMatrix& z, NumericVector& z_delays, int d) 
+double rdi_single_run_conditioned_cpp(NumericMatrix& x, NumericMatrix& y, NumericMatrix& z, NumericVector& z_delays, int d = 1) 
 {
   int Nx = x.rows(); int Ny = y.rows(); int Nz = z.rows(); // int dx = x.cols(); int dy = y.cols(); int dz = z.cols(); 
   if(Nx != Ny | Nx != Nz)
@@ -666,7 +806,7 @@ List calculate_rdi_cpp_wrap(SEXP expr_data, SEXP delays, SEXP super_graph, SEXP 
 
 // max_rdi_delays could be double matrix in future (current IntegerMatrix)
 // [[Rcpp::export]]
-List extract_top_incoming_nodes_delays(NumericMatrix max_rdi_value, IntegerMatrix max_rdi_delays, int k)
+List extract_top_incoming_nodes_delays(NumericMatrix max_rdi_value, IntegerMatrix max_rdi_delays, int k = 5)
 {
   int n_genes = max_rdi_value.rows(), i, j, current_k_ind;
   NumericMatrix top_incoming_values(n_genes, k + 1);
@@ -720,7 +860,7 @@ calculate conditional restricted direction information for all genes in a expres
 //-------------------------------------------------------------------------------------------------------------------
 
 NumericMatrix calculate_conditioned_rdi_cpp(NumericMatrix& expr_data, IntegerMatrix& super_graph, 
-                                            NumericMatrix& max_rdi_value, IntegerMatrix& max_rdi_delays, int k) //, const int cores, const bool verbose
+                                            NumericMatrix& max_rdi_value, IntegerMatrix& max_rdi_delays, int k = 5) //, const int cores, const bool verbose
 {
   // if(verbose == TRUE) Rcout << "Calculating the conditional restricted direct mutual information for each pair of genes" << std::endl;
   NumericVector k_ncol = NumericVector::create(k, expr_data.cols() - 2); 
@@ -882,7 +1022,7 @@ R_crdi_time <- b - a
 //' @return a updated matrix with gene expression smoothed with window size equal to window_size
 //' @export
 // [[Rcpp::export]]
-NumericMatrix smooth_gene(NumericMatrix& expr_data, const int window_size)
+NumericMatrix smooth_gene(NumericMatrix& expr_data, const int window_size = 40)
 { // columns: genes; rows: cells 
   int win_range = expr_data.rows() - window_size;
   NumericMatrix expr_data_smooth(expr_data(Range(0, win_range), _));
@@ -1169,7 +1309,7 @@ b <- Sys.time()
 
 
 // [[Rcpp::export]]
-double rdi_single_run_multiple_run_cpp(NumericMatrix& x, NumericMatrix& y, int d, IntegerVector run_vec) 
+double rdi_single_run_multiple_run_cpp(NumericMatrix& x, NumericMatrix& y, int d = 1, IntegerVector run_vec = 0) 
 {
   int Nx = x.rows(); int Ny = y.rows(); int Cx = x.cols(); int Cy = y.cols(); int run_len; 
   
@@ -1192,7 +1332,7 @@ double rdi_single_run_multiple_run_cpp(NumericMatrix& x, NumericMatrix& y, int d
   } else {
 
     // correctly set the dimensionality for the x_0, y_0 and y_1 matrix 
-    int tot_len = Nx - d * (run_max + 1); 
+    int tot_len = Nx - d * (run_max + 1); // number of samples minus the delay times total number of runs 
     // Rcout << "\n tot_len is" << tot_len << std::endl; 
    // for(int i = 0; i <= run_max; i++) // concatenate the data 
     // {
@@ -1225,7 +1365,7 @@ double rdi_single_run_multiple_run_cpp(NumericMatrix& x, NumericMatrix& y, int d
       }
 
       pos = as<uvec>(wrap(Range(current_ind, current_ind + run_len - d - 1))); 
-      IntegerVector test_range = Range(0, 3);
+      // IntegerVector test_range = Range(0, 3);
       // Rcout << "\n pos is" << pos << "test_range is " << test_range  << "current_ind is " << current_ind << std::endl; 
       
       // assuming x is only one column (Cx, Cy is not used)
@@ -1297,7 +1437,7 @@ double rdi_single_run_multiple_run_cpp(NumericMatrix& x, NumericMatrix& y, int d
 }
 
 // [[Rcpp::export]]
-List calculate_rdi_multiple_run_cpp(NumericMatrix& expr_data, IntegerVector delays, IntegerVector run_vec, IntegerMatrix& super_graph, IntegerVector turning_points, int method) //, method: 1 rdi; 2: lmi 
+List calculate_rdi_multiple_run_cpp(NumericMatrix& expr_data, IntegerVector delays, IntegerVector run_vec, IntegerMatrix& super_graph, IntegerVector turning_points = 0, int method = 1) //, method: 1 rdi; 2: lmi 
 {
   const int n_genes(expr_data.cols()), n_samples(expr_data.rows());
   // Rcout << "n_genes is " << n_genes << "n_samples is " << n_samples << std::endl;
@@ -1377,7 +1517,7 @@ List calculate_rdi_multiple_run_cpp(NumericMatrix& expr_data, IntegerVector dela
         }
         else if(method == 2)
         {
-          // RDI(i, j + k * n_genes) = lmi_single_run_cpp(expr_1, expr_2, delays[k], run_vec); // how to deal with delays include multiple values?
+          RDI(i, j + k * n_genes) = lmi_multiple_run_cpp(expr_1, expr_2, delays[k], run_vec); // how to deal with delays include multiple values?
         }
         // Rcout << "The RDI value  is " << RDI(i, j + k * n_genes) << std::endl;
       }
@@ -1461,7 +1601,7 @@ calculate conditional restricted direction information for a single run
 //-------------------------------------------------------------------------------------------------------------------
 
 // [[Rcpp::export]]
-double rdi_multiple_runs_conditioned_cpp(NumericMatrix& x, NumericMatrix& y, NumericMatrix& z, IntegerVector& z_delays, int d, IntegerVector run_vec) 
+double rdi_multiple_runs_conditioned_cpp(NumericMatrix& x, NumericMatrix& y, NumericMatrix& z, IntegerVector& z_delays, int d = 1, IntegerVector run_vec = 0) 
 {
   int Nx = x.rows(); int Ny = y.rows(); int Nz = z.rows(); int Cx = x.cols(); int Cy = y.cols(); int Cz = z.cols(); int run_len; 
   if(Nx != Ny | Nx != Nz)
@@ -1683,7 +1823,7 @@ calculate conditional restricted direction information for all genes in a expres
 
 // [[Rcpp::export]]
 NumericMatrix calculate_multiple_run_conditioned_rdi_cpp(NumericMatrix& expr_data, IntegerMatrix& super_graph, 
-                                            NumericMatrix& max_rdi_value, IntegerMatrix& max_rdi_delays, IntegerVector run_vec, int k) //, const int cores, const bool verbose
+                                            NumericMatrix& max_rdi_value, IntegerMatrix& max_rdi_delays, IntegerVector run_vec = 0, int k = 5) //, const int cores, const bool verbose
 {
   // Rcout << "max_rdi_value(gene_pair[0], gene_pair[1]) is " << max_rdi_value << std::endl;
   // if(verbose == TRUE) Rcout << "Calculating the conditional restricted direct mutual information for each pair of genes" << std::endl;
