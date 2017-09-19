@@ -522,7 +522,7 @@ plot_rdi_gene_pairs <- function(x, y, d = 1, run_vec = NULL){
   plot_ly(type = 'scatter3d', x = x[1:(nrow(x) - d), ], y = y[-(1:d), ], z = y[d:(nrow(y) - 1), ], mode = 'markers')
 }
 
-# x = matrix(exprs(lung)[1, ], ncol = 1)
+# # x = matrix(exprs(lung)[1, ], ncol = 1)
 # y = matrix(exprs(lung)[2, ], ncol = 1)
 # 
 # data_xyz <- Reduce(cbind, list(x = x[1:(nrow(x) - d), ], y = y[-(1:d), ], z = y[d:(nrow(y) - 1), ]))
@@ -708,7 +708,10 @@ plot_regulation_over_time <- function(res, gene_name_vec) {
 # plot_rdi_drevi(x, y, x_label = gene_name_vec[2], y_label = gene_name_vec[3])
 
 plot_rdi_pairs <- function(cds_subset, gene_pairs_mat, 
-                           conditioning = F, nConBins = 4, d = 1,
+                           conditioning = F, 
+                           log = TRUE,
+                           nConBins = 4, 
+                           d = 1,
                            grids = NULL,
                            n_row = NULL,
                            n_col = 1,
@@ -741,16 +744,18 @@ plot_rdi_pairs <- function(cds_subset, gene_pairs_mat,
       message("current gene pair is ", gene_pairs_mat[gene_pairs_ind, 1], " -> ",  gene_pairs_mat[gene_pairs_ind, 2])
     
     gene_pairs <- gene_pairs_mat[gene_pairs_ind, ]
-    f_ini_ind <- dim_val^2 * id 
-    r_ini_ind <- dim_val * id
+    f_ini_ind <- dim_val^2 * id #flat_res (normalized density results)
+    r_ini_ind <- dim_val * id #ridge_curve 
     
     gene_pair_name <- paste(gene_pairs[1], gene_pairs[2], sep = ' -> ')
 
     x <- matrix(exprs(cds_subset)[row.names(subset(fData(cds_subset), gene_short_name %in% gene_pairs[1])), ], ncol = 1)
     y_ori <- matrix(exprs(cds_subset)[row.names(subset(fData(cds_subset), gene_short_name %in% gene_pairs[2])), ], ncol = 1)
     
-    x <- log(x + 1)
-    y_ori <- log(y_ori + 1)
+    if(log) {
+      x <- log(x + 1)
+      y_ori <- log(y_ori + 1)
+    }
     
     if(d != 0) {
       x  <- matrix(x[1:(nrow(x) - d), ], ncol = 1)
@@ -763,6 +768,9 @@ plot_rdi_pairs <- function(cds_subset, gene_pairs_mat,
       z <- y_ori
     }
     
+    exprs_res <- expression(paste("Target (", "y", phantom()[{
+      paste("t")
+    }], ")", ""))
     
     if(length(unique(x)) < dim_val | length(unique(y)) < dim_val) {
       # stop(paste0("Genes ", gene_pairs, "are required to express in at least ", dim_val, " cells"))
@@ -783,77 +791,83 @@ plot_rdi_pairs <- function(cds_subset, gene_pairs_mat,
       # full_model_fit <- VGAM::vglm(as.formula("y~z"), data = df, family=gaussianff())
       # 
       # y <- resid(full_model_fit)
-      
-      # data <- Reduce(cbind, list(x, y, z))
-      # 
-      # xyz_kde <- kde(data, gridsize = c(25,25, 25))
-      # 
-      # x_meshgrid <- xyz_kde$eval.points[[1]]
-      # y_meshgrid <- xyz_kde$eval.points[[2]]
-      # z_meshgrid <- xyz_kde$eval.points[[3]]
-      # 
-      # den_res <- matrix(0, nrow = length(x_meshgrid), ncol = length(y_meshgrid))
-      # 
-      # nConBins <- length(z_meshgrid)
-      # for(conBins in 1:nConBins) {
-      #   den_res_tmp <- xyz_kde$estimate[, , conBins]
-      #   den_res_tmp[!is.finite(den_res_tmp)] <- 0
-      #   den_res <- den_res + den_res_tmp / (nConBins * sum(den_res_tmp)) 
-      # }
-      # 
-      # den_x <- colSums(den_res) # just calculate the sum for each column 
+# # 
+#       data <- Reduce(cbind, list(x, y, z))
+# 
+#       xyz_kde <- kde(data, gridsize = c(25,25, 25))
+# 
+#       x_meshgrid <- xyz_kde$eval.points[[1]]
+#       y_meshgrid <- xyz_kde$eval.points[[2]]
+#       z_meshgrid <- xyz_kde$eval.points[[3]]
+# 
+#       den_res <- matrix(0, nrow = length(x_meshgrid), ncol = length(y_meshgrid))
+# 
+#       nConBins <- length(z_meshgrid)
+#       for(conBins in 1:nConBins) {
+#         den_res_tmp <- xyz_kde$estimate[, , conBins]
+#         den_res_tmp[!is.finite(den_res_tmp)] <- 0
+#         den_res <- den_res + den_res_tmp / (nConBins * sum(den_res_tmp))
+#       }
+# 
+#       den_x <- colSums(den_res) # just calculate the sum for each column
     }
     ########################################################################################################################################################################
     if(conditioning) {
-      rng_vec <- sort(z)[quantile(1:length(z), seq(0, 1, length.out = nConBins + 1))] #ensure each bin gets the same number of cells 
-      den_res_array <- array(0, dim = c(dim_val, dim_val, nConBins))
-      den_res <- matrix(0, nrow = dim_val, ncol = dim_val)
-      
-      x_meshgrid <- c()
-      y_meshgrid <- c()
-      
-      for(conBins in 2:(nConBins + 1)) {
-        if(conBins != conBins) {
-          x_rng <- x[z >= rng_vec[conBins - 1] & z < rng_vec[conBins]]
-          y_rng <- y[z >= rng_vec[conBins - 1] & z < rng_vec[conBins]]
-        }
-        else {
-          x_rng <- x[z >= rng_vec[conBins - 1] & z <= rng_vec[conBins]]
-          y_rng <- y[z >= rng_vec[conBins - 1] & z <= rng_vec[conBins]]
-        }
-        
-        bandwidth <- c(MASS::bandwidth.nrd(x_rng), MASS::bandwidth.nrd(y_rng))
-        if(any(bandwidth == 0)) {
-          max_vec <- c(max(x_rng), max(y_rng))
-          bandwidth[bandwidth == 0] <- max_vec[bandwidth == 0] / dim_val
-        }
-        den_xy <- MASS::kde2d(x_rng, y_rng, n = c(dim_val, dim_val), lims = c(min(x), max(x), min(y), max(y)), h = bandwidth)
-        den_res_array[, , conBins - 1] <- den_xy$z# as.data.frame()
-        # dimnames(den_res) <- list(paste0("x_", as.character(den_xy$x)), paste0("y_", as.character(den_xy$y)))
-        # den_x_res <- density(x, n = round(length(x))/ 4, from = min(x), to = max(x))
-        # den_x <- den_x_res$y
-        
-        x_meshgrid <- den_xy$x
-        y_meshgrid <- den_xy$y
-        
-        # message('x_meshgrid is ', x_meshgrid)
-        # message('y_meshgrid is ', y_meshgrid)
-      }
-      max_ind <- 0
-      tmp <- 0
-      for(conBins in 1:(nConBins - 1)) {
-        if(tmp < sum(den_res_array[, , conBins]))
-          max_ind <- conBins
-        
-        tmp <- sum(den_res_array[, , conBins])
-        # den_res_tmp <- den_res_array[, , conBins]
-        # den_res_tmp[!is.finite(den_res_tmp)] <- 0
-        # den_res <- den_res + den_res_tmp / nConBins
-        # den_res <- den_res + den_res_tmp / (nConBins * sum(den_res_tmp)) 
-      }
-      den_res <- den_res_array[, , max_ind]
-      
-      den_x <- rowSums(den_res) # just calculate the sum for each column 
+      # exprs_res <- expression(paste("Target (", "y", phantom()[{
+      #   paste("t")
+      # }], "", "|", "y", phantom()[{
+      #   paste("t", phantom() - phantom(), "1")
+      # }], ")", ""))
+      # 
+      # rng_vec <- sort(z)[quantile(1:length(z), seq(0, 1, length.out = nConBins + 1))] #ensure each bin gets the same number of cells 
+      # den_res_array <- array(0, dim = c(dim_val, dim_val, nConBins))
+      # den_res <- matrix(0, nrow = dim_val, ncol = dim_val)
+      # 
+      # x_meshgrid <- c()
+      # y_meshgrid <- c()
+      # 
+      # for(conBins in 2:(nConBins + 1)) {
+      #   if(conBins != conBins) {
+      #     x_rng <- x[z >= rng_vec[conBins - 1] & z < rng_vec[conBins]]
+      #     y_rng <- y[z >= rng_vec[conBins - 1] & z < rng_vec[conBins]]
+      #   }
+      #   else {
+      #     x_rng <- x[z >= rng_vec[conBins - 1] & z <= rng_vec[conBins]]
+      #     y_rng <- y[z >= rng_vec[conBins - 1] & z <= rng_vec[conBins]]
+      #   }
+      #   
+      #   bandwidth <- c(MASS::bandwidth.nrd(x_rng), MASS::bandwidth.nrd(y_rng))
+      #   if(any(bandwidth == 0)) {
+      #     max_vec <- c(max(x_rng), max(y_rng))
+      #     bandwidth[bandwidth == 0] <- max_vec[bandwidth == 0] / dim_val
+      #   }
+      #   den_xy <- MASS::kde2d(x_rng, y_rng, n = c(dim_val, dim_val), lims = c(min(x), max(x), min(y), max(y)), h = bandwidth)
+      #   den_res_array[, , conBins - 1] <- den_xy$z# as.data.frame()
+      #   # dimnames(den_res) <- list(paste0("x_", as.character(den_xy$x)), paste0("y_", as.character(den_xy$y)))
+      #   # den_x_res <- density(x, n = round(length(x))/ 4, from = min(x), to = max(x))
+      #   # den_x <- den_x_res$y
+      #   
+      #   x_meshgrid <- den_xy$x
+      #   y_meshgrid <- den_xy$y
+      #   
+      #   # message('x_meshgrid is ', x_meshgrid)
+      #   # message('y_meshgrid is ', y_meshgrid)
+      # }
+      # max_ind <- 0
+      # tmp <- 0
+      # for(conBins in 1:(nConBins - 1)) {
+      #   if(tmp < sum(den_res_array[, , conBins]))
+      #     max_ind <- conBins
+      #   
+      #   tmp <- sum(den_res_array[, , conBins])
+      #   # den_res_tmp <- den_res_array[, , conBins]
+      #   # den_res_tmp[!is.finite(den_res_tmp)] <- 0
+      #   # den_res <- den_res + den_res_tmp / nConBins
+      #   # den_res <- den_res + den_res_tmp / (nConBins * sum(den_res_tmp)) 
+      # }
+      # den_res <- den_res_array[, , max_ind]
+      # 
+      # den_x <- rowSums(den_res) # just calculate the sum for each column 
     } else {
       bandwidth <- c(MASS::bandwidth.nrd(x), MASS::bandwidth.nrd(y))
       if(any(bandwidth == 0)) {
@@ -876,7 +890,7 @@ plot_rdi_pairs <- function(cds_subset, gene_pairs_mat,
     for(i in 1:length(x_meshgrid)) {
       max_val <- max(den_res[i, ] / den_x[i]); min_val <- 0 #min(den_res[i, ] / den_x[i]) # 
 
-      print(den_x)
+      # print(den_x)
       if(den_x[i] == 0) {
       }
       else {
@@ -896,14 +910,17 @@ plot_rdi_pairs <- function(cds_subset, gene_pairs_mat,
     id <- id + 1
   }
 
-  ridge_curve
+  # ridge_curve
   colnames(xy) <- c('x', 'y', 'type')
   flat_res[, 1:3] <- as.matrix(flat_res[, 1:3])
   ggplot(aes(as.numeric(x), as.numeric(y)), data = flat_res) +  geom_raster(aes(fill = as.numeric(den))) + 
     scale_fill_gradientn("Density", colours = terrain.colors(10)) + 
     geom_rug(aes(as.numeric(x), as.numeric(y)), data = xy, col="darkred",alpha=.1) + 
     geom_path(aes(as.numeric(x), as.numeric(y)), data  = ridge_curve, color = 'red') + facet_wrap(~type, scales = scales, nrow = n_row, ncol = n_col) + 
-    xlab('Source') + ylab('Target') + monocle:::monocle_theme_opts()
+    xlab( expression(paste("Source (", "x", phantom()[{
+      paste("t", phantom() - phantom(), d)
+    }], ")", ""))) + 
+    ylab(exprs_res) + monocle:::monocle_theme_opts()
 }
 
 # 
@@ -937,7 +954,7 @@ plot_ccm <- function(x, d = 1){
   x_3 <- x[seq(1 + 2 * d, length(x), by = 1)]
   # return(cmi(x[1:(nrow(x) - d), ], y[-(1:d), ], y[d:(nrow(y) - 1), ]))
 
-  plot_ly(type = 'scatter3d', x = x_1, y = x_2, z = x_3, mode = 'markers')
+  plot_ly(type = 'scatter3d', x = x_1, y = x_2, z = x_3, color = 1:length(x_1), mode = 'markers')
   
 }
 
@@ -946,16 +963,20 @@ plot_gene_pair_delay <- function() {
 }
 # x_1 <- all_cell_simulation[1, , 1]
 # x_2 <- all_cell_simulation[2, , 1]
-# x_3 <- all_cell_simulation[6, , 1]
+# x_3 <- all_cell_simulation[3, , 1]
 # 
-# plot_ly(type = 'scatter3d', x = x_1, y = x_2, z = x_3, mode = 'markers')
+# plot_ly(type = 'scatter3d', x = x_1, y = x_2, z = x_3, mode = 'markers', color = 1:length(x_1))
 # 
-# d <- 5
-# x <- all_cell_simulation[1, , 1]
+# 
+# # 
+# d <- 10
+# x <- all_cell_simulation[2, , 1]
 # x_1 <- x[seq(1, length(x) - 2 * d, by = 1)]
 # x_2 <- x[seq(1 + d, length(x) - d, by = 1)]
 # x_3 <- x[seq(1 + 2 * d, length(x), by = 1)]
+# plot_ly(type = 'scatter3d', x = x_1, y = x_2, z = x_3, mode = 'markers', color = 1:length(x_3))
 # plot_ly(type = 'scatter3d', x = x_1, y = x_2, z = x_3, mode = 'markers')
+# plot_ly(type = 'scatter3d', x = log(exprs(neuron_sim_cds)['Pax6', ], y = log(exprs(neuron_sim_cds)['Mash1', ], z = log(exprs(neuron_sim_cds)['Hes5', ], color = 1:nrow(neuron_sim_cds), mode = 'markers')
 
 # this function modifies the taylor.diagram function from plotrix package 
 plot_taylor_diagram <- function (ref, RDI, MI, Reference, add = FALSE, col = "red", pch = 19, pos.cor = TRUE, 

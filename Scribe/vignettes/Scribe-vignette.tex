@@ -157,7 +157,7 @@ The easiest way to visualize the pairwise causal gene interaction is to use \tex
 \hlkwd{exprs}\hlstd{(neuron_sim_cds)} \hlkwb{<-} \hlnum{10}\hlopt{^}\hlstd{(}\hlkwd{exprs}\hlstd{(neuron_sim_cds))} \hlcom{#increase the data avoid the fitting issue}
 \hlkwd{exprs}\hlstd{(na_sim_cds)} \hlkwb{<-} \hlnum{10}\hlopt{^}\hlstd{(}\hlkwd{exprs}\hlstd{(na_sim_cds))} \hlcom{#increase the data avoid the fitting issue}
 \hlkwd{plot_gene_pairs_in_pseudotime}\hlstd{(neuron_sim_cds[, ],} \hlkwc{gene_pairs_mat} \hlstd{=}  \hlkwd{as.matrix}\hlstd{(neuron_network[}\hlnum{1}\hlstd{,} \hlnum{1}\hlopt{:}\hlnum{2}\hlstd{]),} \hlkwc{n_row} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{n_col} \hlstd{=} \hlnum{1}\hlstd{)} \hlopt{+}
-  \hlstd{monocle}\hlopt{:::}\hlkwd{monocle_theme_opts}\hlstd{()}
+  \hlstd{monocle}\hlopt{:::}\hlkwd{monocle_theme_opts}\hlstd{()} \hlopt{+} \hlstd{xacHelper}\hlopt{::}\hlkwd{nm_theme}\hlstd{()}
 \end{alltt}
 
 
@@ -176,7 +176,7 @@ The easiest way to visualize the pairwise causal gene interaction is to use \tex
 
 \begin{kframe}\begin{alltt}
 \hlkwd{plot_gene_pairs_branched_pseudotime}\hlstd{(na_sim_cds,} \hlkwc{gene_pairs_mat} \hlstd{=} \hlkwd{as.matrix}\hlstd{(neuron_network)[}\hlnum{1}\hlopt{:}\hlnum{2}\hlstd{,} \hlnum{1}\hlopt{:}\hlnum{2}\hlstd{],} \hlkwc{n_row} \hlstd{=} \hlnum{2}\hlstd{,} \hlkwc{n_col} \hlstd{=} \hlnum{2}\hlstd{)} \hlopt{+}
-  \hlstd{monocle}\hlopt{:::}\hlkwd{monocle_theme_opts}\hlstd{()} \hlcom{# neuron_sim_cds is not a branch trajectory }
+  \hlstd{monocle}\hlopt{:::}\hlkwd{monocle_theme_opts}\hlstd{()} \hlopt{+} \hlstd{xacHelper}\hlopt{::}\hlkwd{nm_theme}\hlstd{()} \hlcom{# neuron_sim_cds is not a branch trajectory }
 \end{alltt}
 \end{kframe}
 
@@ -195,7 +195,7 @@ The easiest way to visualize the pairwise causal gene interaction is to use \tex
 \begin{alltt}
 \hlcom{# we skip some functions below because they uses plotly package whose figures can be rendered in a pdf file }
 \hlkwd{plot_gene_pairs}\hlstd{(neuron_sim_cds,} \hlkwd{matrix}\hlstd{(}\hlkwd{c}\hlstd{(}\hlstr{'Zic1'}\hlstd{,} \hlstr{'Sox8'}\hlstd{,} \hlstr{'Brn2'}\hlstd{,} \hlstr{'Myt1L'}\hlstd{,} \hlstr{'Tuj1'}\hlstd{,} \hlstr{'Stat3'}\hlstd{),} \hlkwc{ncol} \hlstd{=} \hlnum{2}\hlstd{,} \hlkwc{byrow} \hlstd{= T))} \hlopt{+}
-  \hlstd{monocle}\hlopt{:::}\hlkwd{monocle_theme_opts}\hlstd{()}
+  \hlstd{monocle}\hlopt{:::}\hlkwd{monocle_theme_opts}\hlstd{()} \hlopt{+} \hlstd{xacHelper}\hlopt{::}\hlkwd{nm_theme}\hlstd{()}
 \end{alltt}
 \end{kframe}
 
@@ -232,7 +232,7 @@ Moreover, in order to better represent the RDI values, we also implemented a gen
 \begin{alltt}
 \hlcom{# show the drevi plot result for all existing edges:}
 \hlkwd{plot_rdi_pairs}\hlstd{(neuron_sim_cds[,} \hlnum{1}\hlopt{:}\hlnum{200}\hlstd{],} \hlkwc{gene_pairs_mat} \hlstd{=} \hlkwd{as.matrix}\hlstd{(neuron_network[}\hlkwd{c}\hlstd{(}\hlnum{1}\hlstd{,} \hlnum{3}\hlstd{),} \hlnum{1}\hlopt{:}\hlnum{2}\hlstd{]),} \hlkwc{d} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{n_row} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{n_col} \hlstd{=} \hlnum{2}\hlstd{)} \hlopt{+}
-  \hlstd{monocle}\hlopt{:::}\hlkwd{monocle_theme_opts}\hlstd{()}
+  \hlstd{monocle}\hlopt{:::}\hlkwd{monocle_theme_opts}\hlstd{()} \hlopt{+} \hlstd{xacHelper}\hlopt{::}\hlkwd{nm_theme}\hlstd{()}
 \end{alltt}
 \end{kframe}
 
@@ -243,7 +243,7 @@ Moreover, in order to better represent the RDI values, we also implemented a gen
 
 \begin{kframe}\begin{alltt}
 \hlkwd{plot_rdi_pairs}\hlstd{(neuron_sim_cds[,} \hlnum{1}\hlopt{:}\hlnum{200}\hlstd{],} \hlkwc{gene_pairs_mat} \hlstd{=} \hlkwd{matrix}\hlstd{(}\hlkwd{c}\hlstd{(}\hlstr{'Zic1'}\hlstd{,} \hlstr{'Sox8'}\hlstd{,} \hlstr{'Brn2'}\hlstd{,} \hlstr{'Myt1L'}\hlstd{),} \hlkwc{byrow} \hlstd{= T,} \hlkwc{nrow} \hlstd{=} \hlnum{2}\hlstd{),} \hlkwc{n_row} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{n_col} \hlstd{=} \hlnum{2}\hlstd{,} \hlkwc{scales} \hlstd{=} \hlstr{'free'}\hlstd{)} \hlopt{+}
-  \hlstd{monocle}\hlopt{:::}\hlkwd{monocle_theme_opts}\hlstd{()}
+  \hlstd{monocle}\hlopt{:::}\hlkwd{monocle_theme_opts}\hlstd{()} \hlopt{+} \hlstd{xacHelper}\hlopt{::}\hlkwd{nm_theme}\hlstd{()}
 \end{alltt}
 \end{kframe}
 
@@ -272,16 +272,16 @@ Gene regulation is dynamic and the timing of regulation varies from gene-pair to
 \hlkwd{dim}\hlstd{(rdi_res)} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlkwd{dim}\hlstd{(rdi_res)[}\hlnum{1}\hlstd{],} \hlkwd{dim}\hlstd{(rdi_res)[}\hlnum{2}\hlstd{]} \hlopt{*} \hlkwd{dim}\hlstd{(rdi_res)[}\hlnum{2}\hlstd{])}
 
 \hlstd{all_cmbns} \hlkwb{<-} \hlkwd{expand.grid}\hlstd{(gene_name_vec[}\hlnum{1}\hlopt{:}\hlnum{12}\hlstd{], gene_name_vec[}\hlnum{1}\hlopt{:}\hlnum{12}\hlstd{])}
-\hlstd{valid_all_cmbns_df} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{pair} \hlstd{=} \hlkwd{paste}\hlstd{(}\hlkwd{tolower}\hlstd{(all_cmbns}\hlopt{$}\hlstd{Var1),} \hlkwd{tolower}\hlstd{(all_cmbns}\hlopt{$}\hlstd{Var2),} \hlkwc{sep} \hlstd{=} \hlstr{'_'}\hlstd{),} \hlkwc{pval} \hlstd{=} \hlnum{0}\hlstd{)}
+\hlstd{valid_all_cmbns_df} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{pair} \hlstd{=} \hlkwd{paste}\hlstd{((all_cmbns}\hlopt{$}\hlstd{Var1), (all_cmbns}\hlopt{$}\hlstd{Var2),} \hlkwc{sep} \hlstd{=} \hlstr{' -> '}\hlstd{),} \hlkwc{pval} \hlstd{=} \hlnum{0}\hlstd{)}
 
 \hlkwd{row.names}\hlstd{(valid_all_cmbns_df)} \hlkwb{<-} \hlstd{valid_all_cmbns_df}\hlopt{$}\hlstd{pair}
 \hlstd{rdi_res} \hlkwb{<-} \hlkwd{as.data.frame}\hlstd{(rdi_res)}
 \hlkwd{colnames}\hlstd{(rdi_res)} \hlkwb{<-} \hlstd{valid_all_cmbns_df}\hlopt{$}\hlstd{pair}
 
-\hlstd{valid_all_cmbns_df} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{pair} \hlstd{=} \hlkwd{paste}\hlstd{(}\hlkwd{tolower}\hlstd{(}\hlkwd{as.character}\hlstd{(neuron_network[,} \hlnum{1}\hlstd{])),} \hlkwd{tolower}\hlstd{(}\hlkwd{as.character}\hlstd{(neuron_network[,} \hlnum{2}\hlstd{])),} \hlkwc{sep} \hlstd{=} \hlstr{'_'}\hlstd{),} \hlkwc{pval} \hlstd{=} \hlnum{0}\hlstd{)}
+\hlstd{valid_all_cmbns_df} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{pair} \hlstd{=} \hlkwd{paste}\hlstd{((}\hlkwd{as.character}\hlstd{(neuron_network[,} \hlnum{1}\hlstd{])), (}\hlkwd{as.character}\hlstd{(neuron_network[,} \hlnum{2}\hlstd{])),} \hlkwc{sep} \hlstd{=} \hlstr{' -> '}\hlstd{),} \hlkwc{pval} \hlstd{=} \hlnum{0}\hlstd{)}
 \hlstd{valid_rdi_res} \hlkwb{<-} \hlstd{rdi_res[,} \hlkwd{as.character}\hlstd{(valid_all_cmbns_df}\hlopt{$}\hlstd{pair)]}
 \hlstd{norm_valid_rdi_res} \hlkwb{<-} \hlkwd{apply}\hlstd{(valid_rdi_res,} \hlnum{2}\hlstd{,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{) (x} \hlopt{-} \hlkwd{min}\hlstd{(x))} \hlopt{/} \hlstd{(}\hlkwd{max}\hlstd{(x)} \hlopt{-} \hlkwd{min}\hlstd{(x)))}
-\hlstd{pheatmap}\hlopt{::}\hlkwd{pheatmap}\hlstd{(norm_valid_rdi_res[, ],} \hlkwc{cluster_rows} \hlstd{= F,} \hlkwc{cluster_cols} \hlstd{= F,} \hlkwc{annotation_names_col} \hlstd{= T,} \hlkwc{border_color} \hlstd{=} \hlnum{NA}\hlstd{)}
+\hlstd{pheatmap}\hlopt{::}\hlkwd{pheatmap}\hlstd{(}\hlkwd{t}\hlstd{(norm_valid_rdi_res[, ]),} \hlkwc{cluster_rows} \hlstd{= F,} \hlkwc{cluster_cols} \hlstd{= F,} \hlkwc{annotation_names_row} \hlstd{= T,} \hlkwc{border_color} \hlstd{=} \hlnum{NA}\hlstd{)}
 \end{alltt}
 \end{kframe}
 
@@ -291,20 +291,101 @@ Gene regulation is dynamic and the timing of regulation varies from gene-pair to
 
 
 \begin{kframe}\begin{alltt}
-\hlcom{# plot crdi_res}
-\hlkwd{dim}\hlstd{(crdi_res)} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlkwd{dim}\hlstd{(crdi_res)[}\hlnum{1}\hlstd{],} \hlkwd{dim}\hlstd{(crdi_res)[}\hlnum{2}\hlstd{]} \hlopt{*} \hlkwd{dim}\hlstd{(crdi_res)[}\hlnum{2}\hlstd{])}
-
-\hlstd{valid_all_cmbns_df} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{pair} \hlstd{=} \hlkwd{paste}\hlstd{(}\hlkwd{tolower}\hlstd{(all_cmbns}\hlopt{$}\hlstd{Var1),} \hlkwd{tolower}\hlstd{(all_cmbns}\hlopt{$}\hlstd{Var2),} \hlkwc{sep} \hlstd{=} \hlstr{'_'}\hlstd{),} \hlkwc{pval} \hlstd{=} \hlnum{0}\hlstd{)}
-\hlkwd{colnames}\hlstd{(crdi_res)} \hlkwb{<-} \hlstd{valid_all_cmbns_df}\hlopt{$}\hlstd{pair}
-
-\hlstd{valid_all_cmbns_df} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{pair} \hlstd{=} \hlkwd{paste}\hlstd{(}\hlkwd{tolower}\hlstd{(}\hlkwd{as.character}\hlstd{(neuron_network[,} \hlnum{1}\hlstd{])),} \hlkwd{tolower}\hlstd{(}\hlkwd{as.character}\hlstd{(neuron_network[,} \hlnum{2}\hlstd{])),} \hlkwc{sep} \hlstd{=} \hlstr{'_'}\hlstd{),} \hlkwc{pval} \hlstd{=} \hlnum{0}\hlstd{)}
-\hlstd{valid_crdi_res} \hlkwb{<-} \hlstd{crdi_res[,} \hlkwd{as.character}\hlstd{(valid_all_cmbns_df}\hlopt{$}\hlstd{pair)]}
-\hlstd{norm_valid_crdi_res} \hlkwb{<-} \hlkwd{apply}\hlstd{(valid_crdi_res,} \hlnum{2}\hlstd{,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{) (x} \hlopt{-} \hlkwd{min}\hlstd{(x))} \hlopt{/} \hlstd{(}\hlkwd{max}\hlstd{(x)} \hlopt{-} \hlkwd{min}\hlstd{(x)))}
-\hlstd{pheatmap}\hlopt{::}\hlkwd{pheatmap}\hlstd{(norm_valid_crdi_res,} \hlkwc{cluster_rows} \hlstd{= F,} \hlkwc{cluster_cols} \hlstd{= F,} \hlkwc{annotation_names_col} \hlstd{= T,} \hlkwc{border_color} \hlstd{=} \hlnum{NA}\hlstd{)}
+\hlstd{valid_all_cmbns_df_back} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{pair} \hlstd{=} \hlkwd{paste}\hlstd{((}\hlkwd{as.character}\hlstd{(neuron_network[,} \hlnum{1}\hlstd{])), (}\hlkwd{as.character}\hlstd{(neuron_network[,} \hlnum{2}\hlstd{])),} \hlkwc{sep} \hlstd{=} \hlstr{' -> '}\hlstd{),} \hlkwc{pval} \hlstd{=} \hlnum{0}\hlstd{)}
+\hlstd{valid_rdi_res_back} \hlkwb{<-} \hlstd{rdi_res[,} \hlkwd{as.character}\hlstd{(valid_all_cmbns_df_back}\hlopt{$}\hlstd{pair)]}
+\hlstd{norm_valid_rdi_res_back} \hlkwb{<-} \hlkwd{apply}\hlstd{(valid_rdi_res_back,} \hlnum{2}\hlstd{,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{) (x} \hlopt{-} \hlkwd{min}\hlstd{(x))} \hlopt{/} \hlstd{(}\hlkwd{max}\hlstd{(x)} \hlopt{-} \hlkwd{min}\hlstd{(x)))}
+\hlstd{pheatmap}\hlopt{::}\hlkwd{pheatmap}\hlstd{(}\hlkwd{t}\hlstd{(norm_valid_rdi_res_back[, ]),} \hlkwc{cluster_rows} \hlstd{= F,} \hlkwc{cluster_cols} \hlstd{= F,} \hlkwc{annotation_names_row} \hlstd{= T,} \hlkwc{border_color} \hlstd{=} \hlnum{NA}\hlstd{)}
 \end{alltt}
 \end{kframe}
 
 {\centering \includegraphics[width=\maxwidth]{figure/plot_temporal_rdi-2} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlcom{# plot crdi_res}
+\hlkwd{dim}\hlstd{(crdi_res)} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlkwd{dim}\hlstd{(crdi_res)[}\hlnum{1}\hlstd{],} \hlkwd{dim}\hlstd{(crdi_res)[}\hlnum{2}\hlstd{]} \hlopt{*} \hlkwd{dim}\hlstd{(crdi_res)[}\hlnum{2}\hlstd{])}
+
+\hlstd{valid_all_cmbns_df} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{pair} \hlstd{=} \hlkwd{paste}\hlstd{((all_cmbns}\hlopt{$}\hlstd{Var1), (all_cmbns}\hlopt{$}\hlstd{Var2),} \hlkwc{sep} \hlstd{=} \hlstr{' -> '}\hlstd{),} \hlkwc{pval} \hlstd{=} \hlnum{0}\hlstd{)}
+\hlkwd{colnames}\hlstd{(crdi_res)} \hlkwb{<-} \hlstd{valid_all_cmbns_df}\hlopt{$}\hlstd{pair}
+
+\hlstd{valid_all_cmbns_df} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{pair} \hlstd{=} \hlkwd{paste}\hlstd{((}\hlkwd{as.character}\hlstd{(neuron_network[,} \hlnum{1}\hlstd{])), (}\hlkwd{as.character}\hlstd{(neuron_network[,} \hlnum{2}\hlstd{])),} \hlkwc{sep} \hlstd{=} \hlstr{' -> '}\hlstd{),} \hlkwc{pval} \hlstd{=} \hlnum{0}\hlstd{)}
+\hlstd{valid_crdi_res} \hlkwb{<-} \hlstd{crdi_res[,} \hlkwd{as.character}\hlstd{(valid_all_cmbns_df}\hlopt{$}\hlstd{pair)]}
+\hlstd{norm_valid_crdi_res} \hlkwb{<-} \hlkwd{apply}\hlstd{(valid_crdi_res,} \hlnum{2}\hlstd{,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{) (x} \hlopt{-} \hlkwd{min}\hlstd{(x))} \hlopt{/} \hlstd{(}\hlkwd{max}\hlstd{(x)} \hlopt{-} \hlkwd{min}\hlstd{(x)))}
+\hlcom{# norm_valid_crdi_res_ordered <- norm_valid_crdi_res[, order(unlist(apply(norm_valid_crdi_res, 2, which.max)))]}
+\hlstd{pheatmap}\hlopt{::}\hlkwd{pheatmap}\hlstd{(}\hlkwd{t}\hlstd{(norm_valid_crdi_res[, ]),} \hlkwc{cluster_rows} \hlstd{= F,} \hlkwc{cluster_cols} \hlstd{= F,} \hlkwc{annotation_names_row} \hlstd{= T,} \hlkwc{border_color} \hlstd{=} \hlnum{NA}\hlstd{)}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/plot_temporal_rdi-3} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlstd{pheatmap}\hlopt{::}\hlkwd{pheatmap}\hlstd{(}\hlkwd{t}\hlstd{(norm_valid_crdi_res[, ]),} \hlkwc{cluster_rows} \hlstd{= F,} \hlkwc{cluster_cols} \hlstd{= F,} \hlkwc{annotation_names_row} \hlstd{= T,} \hlkwc{border_color} \hlstd{=} \hlnum{NA}\hlstd{)}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/plot_temporal_rdi-4} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlstd{neuron_net} \hlkwb{<-} \hlkwd{graph_from_edgelist}\hlstd{(}\hlkwd{as.matrix}\hlstd{(neuron_network[,} \hlnum{1}\hlopt{:}\hlnum{2}\hlstd{]),} \hlkwc{directed} \hlstd{= T)}
+
+\hlstd{layout_coord} \hlkwb{<-} \hlkwd{layout_as_tree}\hlstd{(neuron_net)}
+\hlkwd{row.names}\hlstd{(layout_coord)} \hlkwb{<-} \hlkwd{V}\hlstd{(neuron_net)}\hlopt{$}\hlstd{name}
+\hlstd{layout_coord[}\hlstr{"Tuj1"}\hlstd{, ]} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlopt{-}\hlnum{1.25}\hlstd{,}  \hlnum{0}\hlstd{)}
+
+\hlstd{layout_coord[}\hlstr{"Scl"}\hlstd{, ]} \hlkwb{<-} \hlstd{layout_coord[}\hlstr{"Olig2"}\hlstd{, ]}
+\hlstd{layout_coord[}\hlstr{"Olig2"}\hlstd{, ]} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlnum{1.25}\hlstd{,} \hlnum{1.00}\hlstd{)}
+\hlstd{layout_coord[}\hlstr{"Stat3"}\hlstd{, ]} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlnum{0.4}\hlstd{,} \hlnum{0.5}\hlstd{)}
+\hlstd{layout_coord[}\hlstr{"Aldh1L"}\hlstd{, ]} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlopt{-}\hlnum{0.75}\hlstd{,} \hlopt{-}\hlnum{1}\hlstd{)}
+\hlstd{layout_coord[}\hlstr{"Myt1L"}\hlstd{, ]} \hlkwb{<-} \hlstd{layout_coord[}\hlstr{"Sox8"}\hlstd{, ]}
+\hlstd{layout_coord[}\hlstr{"Sox8"}\hlstd{, ]} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlnum{1.95}\hlstd{,} \hlnum{0}\hlstd{)}
+
+\hlstd{color} \hlkwb{=} \hlkwd{rep}\hlstd{(}\hlstr{'blue'}\hlstd{,} \hlnum{21}\hlstd{)}
+\hlstd{color[}\hlkwd{c}\hlstd{(}\hlnum{5}\hlstd{,} \hlnum{12}\hlstd{,} \hlnum{14}\hlstd{,} \hlnum{16}\hlstd{)]} \hlkwb{<-} \hlstr{'red'}
+
+\hlstd{res} \hlkwb{<-} \hlkwd{apply}\hlstd{(norm_valid_crdi_res,} \hlnum{2}\hlstd{,} \hlkwa{function}\hlstd{(}\hlkwc{x}\hlstd{)} \hlkwd{c}\hlstd{(}\hlkwd{mean}\hlstd{(x[}\hlnum{1}\hlopt{:}\hlnum{37}\hlstd{]),} \hlkwd{mean}\hlstd{(x[}\hlnum{38}\hlopt{:}\hlnum{64}\hlstd{]),} \hlkwd{mean}\hlstd{(x[}\hlnum{65}\hlopt{:}\hlnum{111}\hlstd{]),} \hlkwd{mean}\hlstd{(x[}\hlnum{112}\hlopt{:}\hlnum{150}\hlstd{])))}
+\hlkwd{plot}\hlstd{(neuron_net,} \hlkwc{layout} \hlstd{= layout_coord,} \hlkwc{edge.width}\hlstd{=res[}\hlnum{1}\hlstd{, ]} \hlopt{*} \hlnum{5}\hlstd{,} \hlkwc{edge.color} \hlstd{= color)}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/plot_temporal_rdi-5} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlkwd{plot}\hlstd{(neuron_net,} \hlkwc{layout} \hlstd{= layout_coord,} \hlkwc{edge.width}\hlstd{=res[}\hlnum{2}\hlstd{, ]} \hlopt{*} \hlnum{5}\hlstd{,} \hlkwc{edge.color} \hlstd{= color)}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/plot_temporal_rdi-6} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlkwd{plot}\hlstd{(neuron_net,} \hlkwc{layout} \hlstd{= layout_coord,} \hlkwc{edge.width}\hlstd{=res[}\hlnum{3}\hlstd{, ]} \hlopt{*} \hlnum{5}\hlstd{,} \hlkwc{edge.color} \hlstd{= color)}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/plot_temporal_rdi-7} 
+
+}
+
+
+\begin{kframe}\begin{alltt}
+\hlkwd{plot}\hlstd{(neuron_net,} \hlkwc{layout} \hlstd{= layout_coord,} \hlkwc{edge.width}\hlstd{=res[}\hlnum{4}\hlstd{, ]} \hlopt{*} \hlnum{5}\hlstd{,} \hlkwc{edge.color} \hlstd{= color)}
+\end{alltt}
+\end{kframe}
+
+{\centering \includegraphics[width=\maxwidth]{figure/plot_temporal_rdi-8} 
 
 }
 
@@ -852,14 +933,14 @@ This vignette was created from Wolfgang Huber's Bioconductor vignette style docu
 ## [16] labeling_0.3           Rtsne_0.13             stringr_1.2.0         
 ## [19] htmlwidgets_0.8        pheatmap_1.0.8         munsell_0.4.3         
 ## [22] httpuv_1.3.3           pkgconfig_2.0.1        htmltools_0.3.6       
-## [25] tibble_1.3.1           codetools_0.2-15       matrixStats_0.52.2    
-## [28] viridisLite_0.2.0      dplyr_0.5.0            grid_3.3.2            
-## [31] densityClust_0.2.1     xtable_1.8-2           nlme_3.1-131          
-## [34] jsonlite_1.4           gtable_0.2.0           DBI_0.6-1             
-## [37] magrittr_1.5           scales_0.4.1           stringi_1.1.5         
-## [40] limma_3.30.13          fastICA_1.2-0          RColorBrewer_1.1-2    
-## [43] tools_3.3.2            purrr_0.2.2.2          HSMMSingleCell_0.108.0
-## [46] colorspace_1.3-2       cluster_2.0.6
+## [25] tibble_1.3.1           xacHelper_0.0.1.0000   codetools_0.2-15      
+## [28] matrixStats_0.52.2     viridisLite_0.2.0      dplyr_0.5.0           
+## [31] grid_3.3.2             densityClust_0.2.1     xtable_1.8-2          
+## [34] nlme_3.1-131           jsonlite_1.4           gtable_0.2.0          
+## [37] DBI_0.6-1              magrittr_1.5           scales_0.4.1          
+## [40] stringi_1.1.5          limma_3.30.13          fastICA_1.2-0         
+## [43] RColorBrewer_1.1-2     tools_3.3.2            purrr_0.2.2.2         
+## [46] HSMMSingleCell_0.108.0 colorspace_1.3-2       cluster_2.0.6
 \end{verbatim}
 \end{kframe}
 \end{knitrout}

@@ -603,7 +603,8 @@ List cmi_cpp(const NumericMatrix& x, const NumericMatrix& y, NumericMatrix z, in
   // NumericVector weight = knn_density(data_xz, k);  // try data_xz
   NumericVector weight = knn_density(x, x, k);  // try data_xz
   
-  double cmi_res = mean(information_samples * weight);//mean(information_samples);
+  // double cmi_res = mean(information_samples * weight);//mean(information_samples);
+  double cmi_res = mean(information_samples);
   
   // test that there is no na or nan values before running knn-graph search 
   int is_na_tmp = 0;
