@@ -1,8 +1,22 @@
 #' Calculate turning point for a linear or branched trajectory 
 #'
 #' This function estimates the inflection point or the gene-wise branch point for each gene in a cell trajectory, without or with branch points respectively
-#' @param cds_subset a cds object after trajectory reconstruction 
-#' @return a updated cds with a newly added column (turning_point) in pData indicates the inflection or branch time point.
+#' 
+#' @param cds_subset A cds object after trajectory reconstruction 
+#' @param type A character determines whether or not we will return the order for the turning point or an actual value 
+#' @param branch_point If the cds involves a branching process, we pass this argument to determine which branch point we should use for calculating the "turning point"
+#' @param cores Numer of cores to run this function 
+#' @return A updated cds with a newly added column (turning_point) in pData indicates the inflection or branch time point.
+#' @import ggplot2
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
+#' @examples
+#' \dontrun{
+#' lung <- load_lung() 
+#' lung_update <- estimate_turning_point(lung, type = 'value')
+#' }
+#' @export
+#' 
 #' to do: write a function to integrate BGP with Monocle 
 estimate_turning_point <- function(cds_subset, type = c('order', 'value'), branch_point = 1, cores = 1) {
   cds_exprs <- pData(cds_subset)
@@ -53,15 +67,14 @@ estimate_turning_point <- function(cds_subset, type = c('order', 'value'), branc
   return(cds_subset)
 }
 
-# lung_update <- estimate_turning_point(lung)
-# lung_update <- estimate_turning_point(lung, type = 'value')
-
+# think about passing a pseudotime ordered cds instead of a matrix 
 #' Calculate conditionally RDI value
 #'
-#' This function estimates the RDI value for all gene-pair combination from the genes_data (or that specified in the super_graph) 
+#' This function estimates the conditional RDI value for all gene-pair combination from the genes_data (or that specified in the super_graph) 
 #' in the pseudotime/time series data, conditioned on the top top_incoming_k incoming nodes. 
 #' The result from the calculate_rdi function will be used to identify the proper delay for the gene-pair under test corresponds to that 
 #' with highest RDI as well as the proper delays for the k incoming nodes which corresponds to that with highest RDI values.
+#' 
 #' @param genes_data Time / Pseudotime series expression data (Rows are samples while columns are features).  
 #' @param super_graph A graph including all possible interactions used for performing the causality inference. When it is NULL, 
 #' all possible pairs of interactions for the genes_data are used, otherwise only the interactions specified in the graph are used.
@@ -70,6 +83,16 @@ estimate_turning_point <- function(cds_subset, type = c('order', 'value'), branc
 #' @param rdi_list a list returned from calculate_rdi function. 
 #' @param top_incoming_k The number of genes to be conditioned on when calculating the conditional RDI values 
 #' @return a dataframe storing conditional RDI results. First two columns are the id names for the genes.
+#' @import ggplot2
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
+#' @examples
+#' \dontrun{
+#' lung <- load_lung() 
+#' lung_update <- estimate_turning_point(lung, type = 'value')
+#' }
+#' @export
+#' 
 #' Third column is the conditional RDI value.
 #' 
 calculate_conditioned_rdi <- function(genes_data, super_graph = NULL, rdi_list, top_incoming_k = 1) {
@@ -114,21 +137,30 @@ calculate_conditioned_rdi <- function(genes_data, super_graph = NULL, rdi_list, 
   return(cRDI_mat); 
 }
 
-#' @title
-#' calculate_rdi
-#' @description
-#' This subroutine calculates RDI of Pseudo-time series expression data 
-#' 
-#' @param Time / Pseudo-time series expression data where each row is a sample, each column is a feature 
-#' 
-#' @param delays Time lags used to estimate the RDI values 
-#' 
-#' @param method either 1, 2 represents either using (RDI: restricted direction information) or LMI (lagged mutual information) 
+#' Calculate RDI values
 #'
-#' @details
-#' \code{calculate_rdi} takes a time / Pseudo-time series expression data as well as the time lags and then calculate the restricted direct information between each pair of genes under different delays. 
-#' @return a list with four components: matrix for RDI (dimension is number of genes X length of delays times number of genes), vector of delays, max_rdi_value and max_rdi_delays 
+#' This function estimates the RDI value for all gene-pair combination from the genes_data (or that specified in the super_graph) 
+#' in the pseudotime/time series data.
+#' 
+#' @param genes_data Time / Pseudotime series expression data (Rows are samples while columns are features).  
+#' @param delays A vector of time delays used during information transfer estimation between genes 
+#' @param super_graph A graph including all possible interactions used for performing the causality inference. When it is NULL, 
+#' all possible pairs of interactions for the genes_data are used, otherwise only the interactions specified in the graph are used.
+#' Note that the super_graph only accept integer matrix for now (each integer corresponds to a particular gene in the genes_data).  
+#' @param turning_points pseudo-time/time series for the gene expression data
+#' @param method a list returned from calculate_rdi function. 
+#' @return a dataframe storing conditional RDI results. First two columns are the id names for the genes.
+#' @import ggplot2
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
+#' @examples
+#' \dontrun{
+#' lung <- load_lung() 
+#' lung_update <- estimate_turning_point(lung, type = 'value')
+#' }
 #' @export
+#' 
+#' Third column is the conditional RDI value.
 #' 
 calculate_rdi <- function(genes_data, delays, super_graph = NULL, turning_points = NULL, method = 1) {
   if(!all(is.finite(genes_data))) {
@@ -179,12 +211,13 @@ calculate_rdi <- function(genes_data, delays, super_graph = NULL, turning_points
 # update this to multiple run 
 ####################################################################################################################################################################################
 
-#' Calculate conditionally RDI value
+#' Calculate conditionally RDI value for multiple runs (replicates) of experiments 
 #'
 #' This function estimates the RDI value for all gene-pair combination from the genes_data (or that specified in the super_graph) 
-#' in the pseudotime/time series data, conditioned on the top top_incoming_k incoming nodes. 
-#' The result from the calculate_rdi function will be used to identify the proper delay for the gene-pair under test corresponds to that 
-#' with highest RDI as well as the proper delays for the k incoming nodes which corresponds to that with highest RDI values.
+#' in the pseudotime/time series data, conditioned on the top top_incoming_k incoming nodes. If multiple directly related experiments 
+#' are conducted, we can pass the information of each experiment by the run_vec argument and this function will concatenate those experiments
+#' based on run_vec. 
+#' 
 #' @param genes_data Time / Pseudotime series expression data (Rows are samples while columns are features).  
 #' @param run_vec A vector describes which run (lineage) does the current cell come from. It has the some length as the row length of genes_data. 
 #' @param super_graph A graph including all possible interactions used for performing the causality inference. When it is NULL, 
@@ -243,9 +276,11 @@ calculate_conditioned_rdi_multiple_run <- function(genes_data, run_vec = NULL, s
 }
 
 #' @title
-#' calculate_rdi
+#' Calculate RDI value for multiple realization of directly related experiments 
 #' @description
-#' This subroutine calculates RDI of Pseudo-time series expression data 
+#' This subroutine estimates the RDI value for all gene-pair combination from the genes_data (or that specified in the super_graph) 
+#' in the pseudotime/time series data. If multiple directly related experiments are conducted, we can pass the information of each 
+#' experiment by the run_vec argument and this function will concatenate those experiments based on run_vec. 
 #' 
 #' @param genes_data Time / Pseudotime series expression data (Rows are samples while columns are features).  
 #' @param run_vec A vector describes which run (lineage) does the current cell come from. It has the some length as the row length of genes_data. 
@@ -314,7 +349,7 @@ calculate_rdi_multiple_run <- function(genes_data, run_vec = NULL, delays, super
 
 #' Create a pseudo-time-seires
 #'
-#' This function takes a cds (branched or not) and then convert to a pseudotime serious 
+#' This function takes a cds (branched or not) and then convert to a pseudotime series.  
 #' @param cds A cds which has been ordered with Monocle  
 #' @param branch_points Vector for the branch points. If it is null, there is no branching in the data 
 #' @return a list storing the pseudo-time-series data and a vector storing the run id for each cell (row) in the data 
@@ -369,8 +404,29 @@ createPTS <- function(cds, branch_points = NULL) {
   return(list(data = data, run_vec = run_vec))
 }
 
-# 
-rdi_crdi_pseudotime <- function(data, window_size = 40, delay = 1, verbose = FALSE) {
+#' Calculate temporal RDI or conditional RDI (cRDI) values. 
+#' 
+#' This function is developed to calculate the temporal RDI or cRDI which can reveal the time point where the regulator will affect the target gene.  
+#' 
+#' @param data CellDataSet for the experiment
+#' @param super_graph A matrix for the valid gene-pairs we will consider for inferring the temporal RDI or cRDI. 
+#' @param window_size The window size we will use for calculating the temporal RDI. 
+#' @param delay The time delay used in calculating the RDI or cRDI values.
+#' @param verbose A logical argument to determine whether or not we will print the detailed running information. 
+#' @return a ggplot2 plot object
+#' @import ggplot2
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
+#' @export
+#' @examples
+#' \dontrun{
+#' lung <- load_lung() 
+#' gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+#' rdi_crdi_pseudotime(lung, gene_pairs_mat)
+#' }
+#' @export
+#' 
+rdi_crdi_pseudotime <- function(data, super_graph = NULL, window_size = 40, delay = 1, verbose = FALSE) {
   win_range <- nrow(data) - window_size - 1
   gene_num <- ncol(data)
   
@@ -649,3 +705,4 @@ reduceDimension <- function(cds,
   }
   cds
 }
+

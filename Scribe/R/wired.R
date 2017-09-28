@@ -23,11 +23,32 @@
 # }
 
 # function for implementing Cole's code:
-
-wired <- function(cds, TF, filter_genes) {
+#' Causal network inference for between informative transcription factor and some informative target genes. 
+#' 
+#' This function implements a procedure to build a causal network based on some prior information of the transcription factors (TFs). It calculates the information 
+#' transfer from TFs to the targets as well as the information transfer between transcription factors while avoiding the calculation of information transfer between 
+#' the targets and from targets to the TFs. This function accepts a vector for the gene short names for all the transcription factors and another vector for the 
+#' informative genes selected through BEAM or methods.
+#' 
+#' @param cds CellDataSet for the experiment
+#' @param TF A vector of the gene short names for all the transcription factors. 
+#' @param informative_genes A vector of the informative genes used for network inference, which is identified through BEAM or other methods
+#' @return a ggplot2 plot object
+#' @import ggplot2
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
+#' @examples
+#' \dontrun{
+#' lung <- load_lung() 
+#' gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+#' wired(lung, TF_vec_id, informative_genes)
+#' }
+#' @export
+#' 
+wired <- function(cds, TF, informative_genes) {
   # 1. read in the TF list
-  TF_vec_names <- intersect(TF, filter_genes)
-  target_vec_names <- setdiff(filter_genes, TF)
+  TF_vec_names <- intersect(TF, informative_genes)
+  target_vec_names <- setdiff(informative_genes, TF)
   
   # 2. build the super-graph:
   TF_pair <- expand.grid(TF_vec_names, TF_vec_names, stringsAsFactors = F) # between TFs 
@@ -122,7 +143,7 @@ wired <- function(cds, TF, filter_genes) {
 # library(destiny)
 # 
 # a <- Sys.time()
-# res <- wired(Olsson_monocyte_cds, TF_vec_id, filter_genes)
+# res <- wired(Olsson_monocyte_cds, TF_vec_id, informative_genes)
 # b <- Sys.time()
 # # # cluster of genes 
 # # match(c("Irf8", "Gfi1"), names(sort(apply(RDI_parallel_res$RDI[TF_vec_id, paste0("cluster_", 1:6)], 1, function(x) sum(x[x > 0]) ))))

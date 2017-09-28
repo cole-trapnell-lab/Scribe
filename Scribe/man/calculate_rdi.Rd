@@ -2,24 +2,34 @@
 % Please edit documentation in R/function.R
 \name{calculate_rdi}
 \alias{calculate_rdi}
-\title{calculate_rdi}
+\title{Calculate RDI values}
 \usage{
 calculate_rdi(genes_data, delays, super_graph = NULL, turning_points = NULL,
   method = 1)
 }
 \arguments{
-\item{delays}{Time lags used to estimate the RDI values}
+\item{genes_data}{Time / Pseudotime series expression data (Rows are samples while columns are features).}
 
-\item{method}{either 1, 2 represents either using (RDI: restricted direction information) or LMI (lagged mutual information)}
+\item{delays}{A vector of time delays used during information transfer estimation between genes}
 
-\item{Time}{/ Pseudo-time series expression data where each row is a sample, each column is a feature}
+\item{super_graph}{A graph including all possible interactions used for performing the causality inference. When it is NULL, 
+all possible pairs of interactions for the genes_data are used, otherwise only the interactions specified in the graph are used.
+Note that the super_graph only accept integer matrix for now (each integer corresponds to a particular gene in the genes_data).}
+
+\item{turning_points}{pseudo-time/time series for the gene expression data}
+
+\item{method}{a list returned from calculate_rdi function.}
 }
 \value{
-a list with four components: matrix for RDI (dimension is number of genes X length of delays times number of genes), vector of delays, max_rdi_value and max_rdi_delays
+a dataframe storing conditional RDI results. First two columns are the id names for the genes.
 }
 \description{
-This subroutine calculates RDI of Pseudo-time series expression data
+This function estimates the RDI value for all gene-pair combination from the genes_data (or that specified in the super_graph) 
+in the pseudotime/time series data.
 }
-\details{
-\code{calculate_rdi} takes a time / Pseudo-time series expression data as well as the time lags and then calculate the restricted direct information between each pair of genes under different delays.
+\examples{
+\dontrun{
+lung <- load_lung() 
+lung_update <- estimate_turning_point(lung, type = 'value')
+}
 }

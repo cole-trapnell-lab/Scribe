@@ -1,3 +1,10 @@
-\begin{thebibliography}{}
+\begin{thebibliography}{1}
+
+\bibitem{Trapnell:2012kp}
+Cole Trapnell, Adam Roberts, Loyal Goff, Geo Pertea, Daehwan Kim, David~R
+  Kelley, Harold Pimentel, Steven~L Salzberg, John~L Rinn, and Lior Pachter.
+\newblock {Differential gene and transcript expression analysis of RNA-seq
+  experiments with TopHat and Cufflinks.}
+\newblock {\em Nature Protocols}, 7(3):562--578, March 2012.
 
 \end{thebibliography}

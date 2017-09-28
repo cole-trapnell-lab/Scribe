@@ -2,21 +2,23 @@
 % Please edit documentation in R/plotting.R
 \name{plot_gene_pairs_in_pseudotime}
 \alias{plot_gene_pairs_in_pseudotime}
-\title{Plot the branch genes in pseduotime with separate lineage curves (This function provide the p-val and null models comparing to plot_genes_branched_pseudotime2).}
+\title{Plot the expression dynamics for a pair of genes in pseduotime with separate kinetic curves.}
 \usage{
 plot_gene_pairs_in_pseudotime(cds_subset, gene_pairs_mat, min_expr = NULL,
-  cell_size = 1.5, nrow = NULL, ncol = 1, color_by = "State",
+  cell_size = 1.5, n_row = NULL, n_col = 1, color_by = "State",
   trend_formula = "~ sm.ns(Pseudotime, df=3)", label_by_short_name = TRUE,
   relative_expr = TRUE, vertical_jitter = NULL, horizontal_jitter = NULL)
 }
 \arguments{
+\item{gene_pairs_mat}{A matrix where each row is the gene pair and the first column is the hypothetical source or regulator while the second column represents the hypothetical target. The name in this matrix should match the name in the gene_short_name column of the cds object.}
+
 \item{min_expr}{the minimum (untransformed) expression level to use in plotted the genes.}
 
 \item{cell_size}{the size (in points) of each cell used in the plot}
 
-\item{nrow}{number of columns used to layout the faceted cluster panels}
+\item{n_row}{number of columns used to layout the faceted cluster panels}
 
-\item{ncol}{number of columns used to layout the faceted cluster panels}
+\item{n_col}{number of columns used to layout the faceted cluster panels}
 
 \item{color_by}{the cell attribute (e.g. the column of pData(cds)) to be used to color each cell}
 
@@ -27,35 +29,22 @@ plot_gene_pairs_in_pseudotime(cds_subset, gene_pairs_mat, min_expr = NULL,
 \item{relative_expr}{A logic flag to determine whether or not we should use the relative expression values}
 
 \item{cds}{CellDataSet for the experiment}
-
-\item{lineage_states}{The states for two branching lineages}
-
-\item{lineage_labels}{The names for each branching lineage}
-
-\item{method}{The method to draw the curve for the gene expression branching pattern, either loess ('loess') or VGLM fitting ('fitting')}
-
-\item{stretch}{A logic flag to determine whether or not the pseudotime trajectory for each lineage should be stretched to the same range or not}
-
-\item{panel_order}{the order in which genes should be layed out (left-to-right, top-to-bottom)}
-
-\item{weighted}{A logic flag to determine whether or not we should use the navie logLikelihood weight scheme for the duplicated progenitor cells}
-
-\item{add_ABC}{A logic flag to determine whether or not we should add the ABC score for each gene}
 }
 \value{
 a ggplot2 plot object
 }
 \description{
-This plotting function is used to make the branching plots for a lineage dependent gene goes through the progenitor state
-and bifurcating into two distinct lineages (Similar to the pitch-fork bifurcation in dynamic systems). In order to make the
-bifurcation plot, we first duplicated the progenitor states and by default stretch each lineage into maturation level 0-100.
-Then we fit two nature spline curves for each lineages using VGAM package.
+This plotting function is used to make kinetic plots for a pair of genes along the pseudotime. It accepts a matrix where each 
+row is the gene pair and the first column is the hypothetical source or regulator while the second column represents the hypothetical 
+target. The name in this matrix should match the name in the gene_short_name column of the cds object. Two vertical lines will 
+be added which indicate the estimated inflection points of the two kinetic curves. The distance between the two curves implies 
+the potential time delay betweeen two genes. Since Scribe doesn't consider the continous value of the pseudotime but merely the 
+ordering of the cells along the pseudotime, the x-axis of this plot also only includes the ordering information.
 }
 \examples{
 \dontrun{
-full_model_fits <- fitModel(HSMM_filtered[sample(nrow(fData(HSMM_filtered)), 100),],  modelFormulaStr="~VGAM::bs(Pseudotime)")
-expression_curve_matrix <- responseMatrix(full_model_fits)
-clusters <- clusterGenes(expression_curve_matrix, k=4)
-plot_clusters(HSMM_filtered[ordering_genes,], clusters)
+lung <- load_lung() 
+gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+plot_gene_pairs_in_pseudotime(lung, gene_pairs_mat)
 }
 }

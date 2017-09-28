@@ -33,8 +33,6 @@ opts_chunk$set(
 @
 
 
-
-
 <<package_loads, include=FALSE, eval=TRUE>>=
 library(Biobase)
 library(knitr)
@@ -124,7 +122,7 @@ plot_gene_pairs_branched_pseudotime(na_sim_cds, gene_pairs_mat = as.matrix(neuro
 
 <<gene_pairwise_plot, eval = TRUE, fig.width = 2, fig.height = 2, fig.align="center">>=
 # we skip some functions below because they uses plotly package whose figures can be rendered in a pdf file 
-plot_gene_pairs(neuron_sim_cds, matrix(c('Zic1', 'Sox8', 'Brn2', 'Myt1L', 'Tuj1', 'Stat3'), ncol = 2, byrow = T)) + 
+plot_lag_drevi(neuron_sim_cds, matrix(c('Zic1', 'Sox8', 'Brn2', 'Myt1L', 'Tuj1', 'Stat3'), ncol = 2, byrow = T)) + 
   monocle:::monocle_theme_opts() + xacHelper::nm_theme()
 
 x <- exprs(neuron_sim_cds)['Pax6', ]
@@ -150,9 +148,9 @@ Moreover, in order to better represent the RDI values, we also implemented a gen
 
 <<plot_drevi, eval = TRUE, fig.width = 4, fig.height = 2, fig.align="center">>=
 # show the drevi plot result for all existing edges:
-plot_rdi_pairs(neuron_sim_cds[, 1:200], gene_pairs_mat = as.matrix(neuron_network[c(1, 3), 1:2]), d = 1, n_row = 1, n_col = 2) +
+plot_lag_drevi(neuron_sim_cds[, 1:200], gene_pairs_mat = as.matrix(neuron_network[c(1, 3), 1:2]), d = 1, n_row = 1, n_col = 2) +
   monocle:::monocle_theme_opts() + xacHelper::nm_theme()
-plot_rdi_pairs(neuron_sim_cds[, 1:200], gene_pairs_mat = matrix(c('Zic1', 'Sox8', 'Brn2', 'Myt1L'), byrow = T, nrow = 2), n_row = 1, n_col = 2, scales = 'free') + 
+plot_lag_drevi(neuron_sim_cds[, 1:200], gene_pairs_mat = matrix(c('Zic1', 'Sox8', 'Brn2', 'Myt1L'), byrow = T, nrow = 2), n_row = 1, n_col = 2, scales = 'free') + 
   monocle:::monocle_theme_opts() + xacHelper::nm_theme()
 @ %def
 
@@ -266,10 +264,10 @@ pheatmap::pheatmap(con_rdi_res_test, cluster_rows = F, cluster_cols = F, annotat
 # load the network:
 load("/Users/xqiu/Dropbox (Personal)/Projects/Monocle2_revision/RData/res") #load the res (we need to mannually set the initial_nodes 1:2 in .process_graph1 function)
 
-plot_network(res$g, type = 'igraph', layout = layout_in_circle)
+plot_causal_network(res$g, type = 'igraph', layout = layout_in_circle)
 # plot_network(res$g, type = 'hiearchy')
 plot.netbiov(res)
-plot_network(res$g, type = 'arcdiagram')
+plot_causal_network(res$g, type = 'arcdiagram')
 
 @ %def
 
@@ -635,7 +633,7 @@ In [Cite: Our Allerton paper] it's shown that this method works in many stochast
 citation("Scribe")
 @ %def
 
- \section{Acknowledgements}
+\section{Acknowledgements}
 
 Scribe was written by Xiaojie Qiu which is based on the python package originally developed by Arman Rahimzamani, with substantial design input Cole Trapnell and Sreeram Kannan. The core of Scribe on estimating restricted direction information (RDI) is written in Rcpp for speed accerlationp. We are grateful to all members from Trapnell and Kannan lab, especially XXX for technical assistance, and Andysheh Mohajeri, Jonanthan Packer, XXX etc. for helpful discussions. This work was supported by  US National Institutes of Health (NIH) grants DP2 HD088158 (C.T.) and U54 DK107979 (C.T.), XXXXXX; C.T. is partly supported by a Dale. F. Frey Award for Breakthrough Scientists and an Alfred P. Sloan Foundation Research Fellowship.
 

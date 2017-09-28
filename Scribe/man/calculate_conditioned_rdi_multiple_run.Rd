@@ -2,7 +2,7 @@
 % Please edit documentation in R/function.R
 \name{calculate_conditioned_rdi_multiple_run}
 \alias{calculate_conditioned_rdi_multiple_run}
-\title{Calculate conditionally RDI value}
+\title{Calculate conditionally RDI value for multiple runs (replicates) of experiments}
 \usage{
 calculate_conditioned_rdi_multiple_run(genes_data, run_vec = NULL,
   super_graph = NULL, rdi_list, top_incoming_k = 1)
@@ -26,7 +26,7 @@ Third column is the conditional RDI value.
 }
 \description{
 This function estimates the RDI value for all gene-pair combination from the genes_data (or that specified in the super_graph) 
-in the pseudotime/time series data, conditioned on the top top_incoming_k incoming nodes. 
-The result from the calculate_rdi function will be used to identify the proper delay for the gene-pair under test corresponds to that 
-with highest RDI as well as the proper delays for the k incoming nodes which corresponds to that with highest RDI values.
+in the pseudotime/time series data, conditioned on the top top_incoming_k incoming nodes. If multiple directly related experiments 
+are conducted, we can pass the information of each experiment by the run_vec argument and this function will concatenate those experiments
+based on run_vec.
 }

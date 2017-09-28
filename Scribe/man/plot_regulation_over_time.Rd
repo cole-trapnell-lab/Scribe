@@ -2,10 +2,33 @@
 % Please edit documentation in R/plotting.R
 \name{plot_regulation_over_time}
 \alias{plot_regulation_over_time}
-\title{Function to plot the RDI value over pseudotime (or maybe just a single curve)}
+\title{Plot the scatterplot for two genes across different cells.}
 \usage{
 plot_regulation_over_time(res, gene_name_vec)
 }
+\arguments{
+\item{cds}{CellDataSet for the experiment}
+
+\item{gene_pairs_mat}{A matrix where each row is the gene pair and the first column is the hypothetical source or regulator while the second column represents the hypothetical target. The name in this matrix should match the name in the gene_short_name column of the cds object.}
+
+\item{n_row}{number of columns used to layout the faceted cluster panels}
+
+\item{n_col}{number of columns used to layout the faceted cluster panels}
+}
+\value{
+a ggplot2 plot object
+}
 \description{
-Function to plot the RDI value over pseudotime (or maybe just a single curve)
+This plot function is the commomly used approach to visualize the relationship between a gene pair.
+Please check other plots for plot_lag_drevi, plot_cross_map, plot_rdi_pairs_heatmap, plot_comb_logic_heatmap,  
+This function accepts a matrix where each row is the gene pair and the first column is the hypothetical source 
+or regulator while the second column represents the hypothetical target. The name in this matrix should match 
+the name in the gene_short_name column of the cds object.
+}
+\examples{
+\dontrun{
+lung <- load_lung() 
+gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+plot_scatter_pairs(lung, gene_pairs_mat)
+}
 }

@@ -1,25 +1,23 @@
-#' Plot the branch genes in pseduotime with separate lineage curves (This function provide the p-val and null models comparing to plot_genes_branched_pseudotime2).
+# use loess to make the plot 
+
+#' Plot the expression dynamics for a pair of genes in pseduotime with separate kinetic curves.
 #'
-#' This plotting function is used to make the branching plots for a lineage dependent gene goes through the progenitor state
-#' and bifurcating into two distinct lineages (Similar to the pitch-fork bifurcation in dynamic systems). In order to make the
-#' bifurcation plot, we first duplicated the progenitor states and by default stretch each lineage into maturation level 0-100.
-#' Then we fit two nature spline curves for each lineages using VGAM package.
+#' This plotting function is used to make kinetic plots for a pair of genes along the pseudotime. It accepts a matrix where each 
+#' row is the gene pair and the first column is the hypothetical source or regulator while the second column represents the hypothetical 
+#' target. The name in this matrix should match the name in the gene_short_name column of the cds object. Two vertical lines will 
+#' be added which indicate the estimated inflection points of the two kinetic curves. The distance between the two curves implies 
+#' the potential time delay betweeen two genes. Since Scribe doesn't consider the continous value of the pseudotime but merely the 
+#' ordering of the cells along the pseudotime, the x-axis of this plot also only includes the ordering information.  
 #'
 #' @param cds CellDataSet for the experiment
-#' @param lineage_states The states for two branching lineages
-#' @param lineage_labels The names for each branching lineage
-#' @param method The method to draw the curve for the gene expression branching pattern, either loess ('loess') or VGLM fitting ('fitting')
-#' @param stretch A logic flag to determine whether or not the pseudotime trajectory for each lineage should be stretched to the same range or not
+#' @param gene_pairs_mat A matrix where each row is the gene pair and the first column is the hypothetical source or regulator while the second column represents the hypothetical target. The name in this matrix should match the name in the gene_short_name column of the cds object. 
 #' @param min_expr the minimum (untransformed) expression level to use in plotted the genes.
 #' @param cell_size the size (in points) of each cell used in the plot
 #' @param n_row number of columns used to layout the faceted cluster panels
 #' @param n_col number of columns used to layout the faceted cluster panels
-#' @param panel_order the order in which genes should be layed out (left-to-right, top-to-bottom)
 #' @param color_by the cell attribute (e.g. the column of pData(cds)) to be used to color each cell
 #' @param trend_formula the model formula to be used for fitting the expression trend over pseudotime
 #' @param label_by_short_name label figure panels by gene_short_name (TRUE) or feature id (FALSE)
-#' @param weighted  A logic flag to determine whether or not we should use the navie logLikelihood weight scheme for the duplicated progenitor cells
-#' @param add_ABC A logic flag to determine whether or not we should add the ABC score for each gene
 #' @param relative_expr A logic flag to determine whether or not we should use the relative expression values
 #' @return a ggplot2 plot object
 #' @import ggplot2
@@ -28,14 +26,10 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' full_model_fits <- fitModel(HSMM_filtered[sample(nrow(fData(HSMM_filtered)), 100),],  modelFormulaStr="~VGAM::bs(Pseudotime)")
-#' expression_curve_matrix <- responseMatrix(full_model_fits)
-#' clusters <- clusterGenes(expression_curve_matrix, k=4)
-#' plot_clusters(HSMM_filtered[ordering_genes,], clusters)
+#' lung <- load_lung() 
+#' gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+#' plot_gene_pairs_in_pseudotime(lung, gene_pairs_mat)
 #' }
-
-# allow gene duplication in gene_pairs_mat 
-# remove panel_order argument 
 plot_gene_pairs_in_pseudotime <- function(cds_subset, 
                               gene_pairs_mat, 
                               min_expr=NULL, 
@@ -199,31 +193,37 @@ plot_gene_pairs_in_pseudotime <- function(cds_subset,
     q 
 }
 
-
-# ############################################################################################################################################################ 
-# # test the plot_gene_pairs_in_pseudotime function 
-# ############################################################################################################################################################ 
-# lung <- load_lung() 
-# gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
-# plot_gene_pairs_in_pseudotime(lung, gene_pairs_mat)
-
-# 
-# load('cds_exprs')
-# 
-# min_expr=0.1 
-# cell_size=0.75 
-# n_row=NULL 
-# ncol=1
-# panel_order=NULL 
-# color_by="State"
-# trend_formula="~ sm.ns(Pseudotime, df=3)"
-# label_by_short_name=TRUE
-# relative_expr=TRUE
-# vertical_jitter=NULL
-# horizontal_jitter=NULL
-
-############################################################################################################################################################ 
-
+#' Plot the expression dynamics for a pair of genes in pseduotime with separate kinetic curves across two different lineages.
+#'
+#' This plotting function is used to make kinetic plots for a pair of genes along the pseudotime in each of branches defined with
+#' the branch point. So each pair of genes has two panels each represents a different branch. This function accepts a matrix where each 
+#' row is the gene pair and the first column is the hypothetical source or regulator while the second column represents the hypothetical 
+#' target. The name in this matrix should match the name in the gene_short_name column of the cds object. Two vertical lines will 
+#' be added which indicate the estimated inflection points of the two kinetic curves. The distance between the two curves implies 
+#' the potential time delay betweeen two genes. Since Scribe doesn't consider the continous value of the pseudotime but merely the 
+#' ordering of the cells along the pseudotime, the x-axis of this plot also only includes the ordering information.  
+#' 
+#' @param cds CellDataSet for the experiment
+#' @param gene_pairs_mat A matrix where each row is the gene pair and the first column is the hypothetical source or regulator while the second column represents the hypothetical target. The name in this matrix should match the name in the gene_short_name column of the cds object. 
+#' @param min_expr the minimum (untransformed) expression level to use in plotted the genes.
+#' @param cell_size the size (in points) of each cell used in the plot
+#' @param n_row number of columns used to layout the faceted cluster panels
+#' @param n_col number of columns used to layout the faceted cluster panels
+#' @param color_by the cell attribute (e.g. the column of pData(cds)) to be used to color each cell
+#' @param trend_formula the model formula to be used for fitting the expression trend over pseudotime
+#' @param label_by_short_name label figure panels by gene_short_name (TRUE) or feature id (FALSE)
+#' @param relative_expr A logic flag to determine whether or not we should use the relative expression values
+#' @return a ggplot2 plot object
+#' @import ggplot2
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
+#' @export
+#' @examples
+#' \dontrun{
+#' lung <- load_lung() 
+#' gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+#' plot_gene_pairs_branched_pseudotime(lung, gene_pairs_mat)
+#' }
 plot_gene_pairs_branched_pseudotime <- function(cds, 
                                     gene_pairs_mat = NULL,
                                     branch_states = NULL, 
@@ -431,46 +431,56 @@ plot_gene_pairs_branched_pseudotime <- function(cds,
   
 }
 
-# 
-# ############################################################################################################################################################ 
-# # test the plot_gene_pairs_in_pseudotime function 
-# ############################################################################################################################################################ 
-# lung <- load_lung()
-# gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
-# plot_gene_pairs_branched_pseudotime(lung, gene_pairs_mat)
-
-# load('cds_exprs')
-
-############################################################################################################################################################ 
-# 
 # library(RColorBrewer)
-
-# simple density plot 
-#' Function to plot the trajectories of two genes
+#' 
+#' Plot the scatterplot for two genes across different cells. 
+#' 
+#' This plot function is the commomly used approach to visualize the relationship between a gene pair.
+#' Please check other plots for plot_lag_drevi, plot_cross_map, plot_rdi_pairs_heatmap, plot_comb_logic_heatmap,  
+#' This function accepts a matrix where each row is the gene pair and the first column is the hypothetical source 
+#' or regulator while the second column represents the hypothetical target. The name in this matrix should match 
+#' the name in the gene_short_name column of the cds object.
+#' 
+#' @param cds CellDataSet for the experiment
+#' @param gene_pairs_mat A matrix where each row is the gene pair and the first column is the hypothetical source or regulator while the second column represents the hypothetical target. The name in this matrix should match the name in the gene_short_name column of the cds object. 
+#' @param n_row number of columns used to layout the faceted cluster panels
+#' @param n_col number of columns used to layout the faceted cluster panels
+#' @return a ggplot2 plot object
+#' @import ggplot2
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
 #' @export
-#'
-#'
-plot_gene_pairs <- function(cds,
+#' @examples
+#' \dontrun{
+#' lung <- load_lung() 
+#' gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+#' plot_scatter_gene_pairs(lung, gene_pairs_mat)
+#' }
+#' @export
+#' 
+plot_scatter_gene_pairs <- function(cds,
                             gene_pairs_mat,
                             n_row = NULL,
-                            n_col = 1,
-                            panel_order = NULL) { #, h = 1
+                            n_col = 1) { #, h = 1
+  
+  gene_id <- row.names(subset(fData(cds), gene_short_name %in% gene_pairs_mat[i, ]))
+
   buylrd = c("#313695", "#4575B4", "#74ADD1", "#ABD9E9", "#E0F3F8", "#FFFFBF",
              "#FEE090", "#FDAE61", "#F46D43", "#D73027", "#A50026")
+  
   if(ncol(gene_pairs_mat) != 2) {
     stop('Please provide a matrix for pairs of genes you want to infer causality.')
   }
-  if(any(!(unique(gene_pairs_mat) %in% row.names(cds)))) {
+  if(length(gene_id) == 0) {
     stop('Please make sure all genes you provided in gene_pairs_mat exist in your data.')
   }
 
   if(nrow(gene_pairs_mat) == 1) {
-    exprs_res <- t(exprs(cds)[gene_pairs_mat, ])
+    exprs_res <- t(exprs(cds)[gene_id, ])
   }
   else {
     exprs_res <- NULL
     for(i in 1:nrow(gene_pairs_mat)) {
-      gene_id <- row.names(subset(fData(cds), gene_short_name %in% gene_pairs_mat[i, ]))
       exprs_res <- cbind(exprs_res, exprs(cds)[gene_id, ])
     }
   }
@@ -478,7 +488,6 @@ plot_gene_pairs <- function(cds,
   colnames(exprs_res_df) <- c('V1', 'V2')
   exprs_res_df$pair <- rep(apply(gene_pairs_mat, 1, function(x) paste(x[1], x[2], sep = "_")), each = ncol(cds))
 
-  #color = pData(data)$State,
   p <- qplot(V1, V2, data = exprs_res_df, geom = 'point', log = 'xy', size = I(1), size = 2) +
     stat_density2d(geom = "tile", aes(fill = ..density..), contour = FALSE) + xlab('') + ylab('') +
     geom_point(color = I("darkgray"), size = I(0.85)) + scale_fill_gradientn(colours = buylrd) +
@@ -511,70 +520,77 @@ plot_gene_pairs <- function(cds,
 # 
 # # make MI, CMI plot: (use the shiny app?)
 # 
-# di::rdi_single_run(matrix(data[, 13], ncol = 1), matrix(data[, 3], 1), 1) #di_single_run
-plot_rdi_gene_pairs <- function(x, y, d = 1, run_vec = NULL){
+
+# implement the support for multiple runs (run_vec) 
+#' Plot the scatterplot formed by the space of x_{t - \mu}, y_t as well as y_{t - 1}. 
+#' 
+#' This plot function is used to visualize the space formed by x_{t - \mu}, y_t as well as y_{t - 1} which is 
+#' used to calculate the RDI score I(x_t -> Y_t) = CMI(x_{t - \mu}, y_t | y_{t - 1}). Please check other ploting
+#' functions (plot_lag_drevi, plot_cross_map, plot_rdi_pairs_heatmap, plot_comb_logic_heatmap) for more intuitive 
+#' visualization. 
+#' 
+#' @param cds CellDataSet for the experiment
+#' @param gene_pair A character vector consists of two gene short names while the first name is the hypothetical source and the second is the target. 
+#' @param d The time delay between the source and the target gene 
+#' @param run_vec A numeric vector of length equal to number of columns (cells) in the cds, encoding the runs (or replicate) id for each experiment. 
+#' @return a plotly object
+#' @import plotly
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
+#' @export
+#' @examples
+#' \dontrun{
+#' lung <- load_lung() 
+#' gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+#' plot_rdi_scatter_gene_pairs(lung, gene_pairs_mat[1, ], d = 5)
+#' }
+#' @export
+plot_rdi_scatter_gene_pairs <- function(cds, gene_pair, d = 1, run_vec = NULL){
+  gene_id_1 <- row.names(subset(fData(cds), gene_short_name %in% gene_pair[1]))
+  gene_id_2 <- row.names(subset(fData(cds), gene_short_name %in% gene_pair[2]))
+  
+  if(length(gene_id_1) == 0 | length(gene_id_2) == 0)
+    stop('Please make sure all genes you provided in gene_pairs_mat exist in your data.')
+  
+  x <- exprs(cds)[gene_id_1, ]
+  y <- exprs(cds)[gene_id_2, ]
+  
   if (is.numeric(x))
     x <- as.matrix(x)
   if (is.numeric(y))
     y <- as.matrix(y)
   if (nrow(x) != nrow(y))
     stop("The number of time samples has to be the same for X and Y")
+  
   plot_ly(type = 'scatter3d', x = x[1:(nrow(x) - d), ], y = y[-(1:d), ], z = y[d:(nrow(y) - 1), ], mode = 'markers')
 }
 
-# # x = matrix(exprs(lung)[1, ], ncol = 1)
-# y = matrix(exprs(lung)[2, ], ncol = 1)
-# 
-# data_xyz <- Reduce(cbind, list(x = x[1:(nrow(x) - d), ], y = y[-(1:d), ], z = y[d:(nrow(y) - 1), ]))
-# dx <- FNN::get.knn(data_xyz, k = 5)
-# nn.index <- dx$nn.index
-# nn.dist <- dx$nn.dist
-# N <- nrow(nn.index)
-# 
-# knn_graph <- NULL
-# edges <- reshape2::melt(t(nn.index)); colnames(edges) <- c("B", "A", "C"); edges <- edges[,c("A","B","C")]
-# edges_weight <- reshape2::melt(t(nn.dist)); #colnames(edges_weight) = c("B", "A", "C"); edges_weight = edges_weight[,c("A","B","C")]
-# edges$B <- edges$C
-
-# if(use_dist)
-#   edges$C <- 1 #edges_weight$value
-# else
-#   edges$C <- 1
-
-#Remove repetitions
-# edges = unique(transform(edges, A = pmin(A,B), B=pmax(A,B)))
-# 
-# Adj <- Matrix::sparseMatrix(i = c(edges$A, edges$B), j = c(edges$B, edges$A), x = c(edges$C, edges$C), dims = c(N, N))
-# 
-# knn_graph <- igraph::graph_from_adjacency_matrix(Adj, mode = "undirected", weighted = T)
-# 
-# V(knn_graph)$color <- 'black'
-# 
-# layout_coord = layout_with_drl(knn_graph)
-# 
-# # pdf(paste(revision_1_fig_dir, 'Time_knn_graph_color_state.pdf', sep = ''))
-# plot(knn_graph, layout = layout_coord, vertex.size=2, vertex.label=NA, vertex.color = 'black')
-# # dev.off()
-# 
-# 
-# set.seed( 123 )
-# x =
-#   1 : 100
-# y1 =
-#   2 *
-#   x + rnorm ( 100 )
-# y2 = -
-#   2 *
-#   x + rnorm ( 100 )
-# plot_ly(  x = x,
-#   y = y1,
-#   type = 'scatter' ) %>%
-#   add_trace(x = x,  y = y2 ) %>%  layout(legend = list(x = 0.5,      y = 1, bgcolor = '#F3F3F3' ))
-
-#' Function to plot the RDI value over pseudotime (or maybe just a single curve)
+# This function need to rewrite which should starts from calculatin the temporal RDI before creating the heatmap plot 
+#' Plot the scatterplot for two genes across different cells. 
+#' 
+#' This plot function is the commomly used approach to visualize the relationship between a gene pair.
+#' Please check other plots for plot_lag_drevi, plot_cross_map, plot_rdi_pairs_heatmap, plot_comb_logic_heatmap,  
+#' This function accepts a matrix where each row is the gene pair and the first column is the hypothetical source 
+#' or regulator while the second column represents the hypothetical target. The name in this matrix should match 
+#' the name in the gene_short_name column of the cds object.
+#' 
+#' @param cds CellDataSet for the experiment
+#' @param gene_pairs_mat A matrix where each row is the gene pair and the first column is the hypothetical source or regulator while the second column represents the hypothetical target. The name in this matrix should match the name in the gene_short_name column of the cds object. 
+#' @param n_row number of columns used to layout the faceted cluster panels
+#' @param n_col number of columns used to layout the faceted cluster panels
+#' @return a ggplot2 plot object
+#' @import ggplot2
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
 #' @export
-#'
-#'
+#' @examples
+#' \dontrun{
+#' lung <- load_lung() 
+#' gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+#' plot_scatter_pairs(lung, gene_pairs_mat)
+#' }
+#' @export
+#' 
 plot_regulation_over_time <- function(res, gene_name_vec) {
   dim(res) <- c(dim(res)[1], dim(res)[2] * dim(res)[2])
   
@@ -586,9 +602,6 @@ plot_regulation_over_time <- function(res, gene_name_vec) {
   pheatmap::pheatmap(res, cluster_rows = F, cluster_cols = T, annotation_names_col = T)
 }
 
-############################################################################################################################################### 
-# visualize mi, rdi, crdi, etc. (density plot, 3d scatter plot, taylor diagram)
-############################################################################################################################################### 
 # sparse network visualization (Hive / cico plot )
 # http://www.vesnam.com/Rblog/viznets3/
 # https://en.wikipedia.org/wiki/Gephi
@@ -598,119 +611,43 @@ plot_regulation_over_time <- function(res, gene_name_vec) {
 # https://bost.ocks.org/mike/miserables/
 # BioFabric
 # http://www.diva-portal.org/smash/get/diva2:1034015/FULLTEXT01.pdf
-############################################################################################################################################### 
-# make pair-wise gene bifurcation plots 
-############################################################################################################################################### 
-# 
-# x <- all_cell_simulation[1, , 1]
-# y <- all_cell_simulation[2, , 1]
-# x <- matrix(x, nrow = 400)
-# y <- matrix(y, nrow = 400)
-# 
-# den_xy <- knn_density(cbind(x, y), k = 5)
-# den_x <- knn_density(x, k = 5)
-# den_y <- knn_density(y, k = 5)
-# 
-# xy <- data.frame(xvar = x, yvar = y, den = den_xy / den_x)
-# head(gb$data[[3]])
-# 
-#   geom_tile(aes(fill = den), colour = "white") + scale_fill_gradient(low = "white", high = "steelblue") + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-# 
-# n1 <- seq(-2,2, length=40)
-# n2 <- seq(1,1, length=40)
-# z <- outer(n1,n2)
-# 
-# x_ind <- as.character(density(x, n = round(length(x))/ 4, from = min(x), to = max(x))$x)
-# y_ind <- as.character(density(x, n = round(length(x))/ 4, from = min(x), to = max(x))$y)
-# 
-# dimnames(den_xy) <- list(x_ind, y_ind)
-#   
-# den_x <- density(x, n = round(length(x))/ 4, from = min(x), to = max(x))$y
-# den_y <- density(y, n = round(length(x))/ 4, from = min(x), to = max(x))$y
-# 
-# ggplot(xy,aes(xvar,yvar))  + geom_point(aes(color = den)) #+ scale_color_gradient(low = "white", high = "steelblue") + geom_rug(col="darkred",alpha=.1) 
-# ggplot(xy,aes(xvar,yvar))  + geom_point(aes(color = den)) + scale_color_gradient(low = "white", high = "steelblue") + geom_rug(col="darkred",alpha=.1) 
-# 
-# weight = (1 / density_estimate / mean(1 / density_estimate));
-# 
-# x <- all_cell_simulation[2, , 1]
-# y <- all_cell_simulation[6, , 1]
-# 
-# # accept a cds and a dataframe of pairs of genes: 
-# plot_rdi_drevi <- function(x, y, d = 1, x_label = 'x', y_label = 'y') {
-#   if (is.numeric(x))
-#     x <- as.matrix(x)
-#   if (is.numeric(y))
-#     y <- as.matrix(y)
-#   if (nrow(x) != nrow(y))
-#     stop("The number of time samples has to be the same for X and Y")
-#   x  <- matrix(x[1:(nrow(x) - d), ], ncol = 1)
-#   y <- matrix(y[-(1:d), ], ncol = 1)
-# 
-#   z <- y[d:(nrow(y) - 1), ]
-# 
-#   den_xy <- MASS::kde2d(x, y, n = c(round(length(x))/ 4, round(length(y))/ 4), lims = c(min(x), max(x), min(y), max(y)))
-#   den_res <- as.data.frame(den_xy$z)
-#   # dimnames(den_res) <- list(paste0("x_", as.character(den_xy$x)), paste0("y_", as.character(den_xy$y)))
-#   den_x_res <- density(x, n = round(length(x))/ 4, from = min(x), to = max(x))
-#   den_x <- den_x_res$y
-# 
-#   flat_res <- matrix(0, nrow = length(den_xy$x) * length(den_xy$y), ncol = 3)
-#   ridge_curve <- matrix(0, nrow = length(den_xy$x), ncol = 2)
-# 
-#   for(i in 1:length(den_xy$x)) {
-#     max_val <- max(den_res[i, ] / den_x[i]) #
-#     max_ind <- which.max(den_res[i, ] / den_x[i])
-#     ridge_curve[i, ] <- c(den_xy$x[i], den_xy$y[max_ind])
-# 
-#     for(j in 1:length(den_xy$y)) {
-# 
-#       flat_res[(i - 1) * length(den_xy$x) + j, ] <- c(den_xy$x[i], den_xy$y[j], den_res[i, j] / den_x[i] / max_val)
-#     }
-#   }
-# 
-#   flat_res <- as.data.frame(flat_res)
-#   colnames(flat_res) <- c(x_label, y_label, "den")
-#   ridge_curve <- as.data.frame(ridge_curve)
-#   colnames(ridge_curve) <- c("x", "y")
-# 
-#   xy <- data.frame(x = x, y = y)
-#   ggplot(aes_string(x_label, y_label), data = flat_res) +  geom_raster(aes(fill = den)) +
-#     scale_fill_gradientn(colours = terrain.colors(10)) +
-#     geom_rug(aes(x, y), data = xy, col="darkred",alpha=.1) +
-#     geom_path(aes(x, y), data  = ridge_curve, color = 'red')
-# }
 
-####################################################################################################################################################################################
-# test on a few examples 
-####################################################################################################################################################################################
-# 
-# > gene_name_vec
-# [1] "Pax6"   "Mash1"  "Brn2"   "Zic1"   "Tuj1"   "Hes5"   "Scl"    "Olig2"
-# [9] "Stat3"  "Myt1L"  "Aldh1L" "Sox8"   "Mature"
-# x <- all_cell_simulation[1, , 1]
-# y <- all_cell_simulation[2, , 1]
-# plot_rdi_drevi(x, y, x_label = gene_name_vec[1], y_label = gene_name_vec[2])
-# 
-# quartz()
-# x <- all_cell_simulation[2, , 1]
-# y <- all_cell_simulation[6, , 1]
-# plot_rdi_drevi(x, y, d = 1, x_label = gene_name_vec[2], y_label = gene_name_vec[6])
-# 
-# quartz()
-# x <- all_cell_simulation[7, , 1]
-# y <- all_cell_simulation[8, , 1]
-# plot_rdi_drevi(x, y, x_label = gene_name_vec[7], y_label = gene_name_vec[8])
-# 
-# quartz()
-# x <- all_cell_simulation[2, , 1]
-# y <- all_cell_simulation[3, , 1]
-# plot_rdi_drevi(x, y, x_label = gene_name_vec[2], y_label = gene_name_vec[3])
-
-plot_rdi_pairs <- function(cds_subset, gene_pairs_mat, 
-                           conditioning = F, 
+#' Plot the lagged DREVI plot for pairs of genes across pseudotime. 
+#' 
+#' This plotting function builds on the original idea of DREVI plot but is extended in the context for causal network.  
+#' It considers the time delay between the hypothetical regulators to the target genes which is parametered by `d`. 
+#' Lagged DREVI plot first estimate the joint density (P(x_{t - d}, y_t)) for x_{t - d} and y_t and divide that by the 
+#' marginal density P(x_{t - d}) to get the conditional density estimate (P(x_{t - d}, y_t | x_{x - d})). 
+#' The 2-d density is estimated through the kde2d function from MASS package. We then calculate 
+#' the z-score for each column of conditional density. Note that this plot tries to demonstrate the potential influence
+#' between two variables instead of the factual influence. 
+#' 
+#' @param cds CellDataSet for the experiment
+#' @param gene_pairs_mat A matrix where each row is the gene pair and the first column is the hypothetical source or regulator while the second column represents the hypothetical target. The name in this matrix should match the name in the gene_short_name column of the cds object. 
+#' @param log A logic argument used to determine whether or not you should perform log transformation (using log(expression + 1)) before calculating density estimates, default to be TRUE. 
+#' @param d The time delay between the source and target gene. 
+#' @param grids The number of grid when creating the lagged DREVI plot.
+#' @param n_row number of columns used to layout the faceted cluster panels
+#' @param n_col number of columns used to layout the faceted cluster panels
+#' @param scales The character string passed to facet function, determines whether or not the scale is fixed or free in different dimensions.
+#' @param verbose A logic argument to determine whether or not we should print the detailed running information. 
+#' @return a ggplot2 plot object
+#' @import ggplot2
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
+#' @export
+#' @examples
+#' \dontrun{
+#' lung <- load_lung() 
+#' gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+#' plot_lag_drevi(lung, gene_pairs_mat)
+#' }
+#' @references Krishnaswamy, Smita, et al. "Conditional density-based analysis of T cell signaling in single-cell data." Science 346.6213 (2014): 1250689.
+#' @export
+#' 
+plot_lag_drevi <- function(cds_subset, gene_pairs_mat, 
                            log = TRUE,
-                           nConBins = 4, 
+                           # nConBins = 4, 
                            d = 1,
                            grids = NULL,
                            n_row = NULL,
@@ -785,90 +722,90 @@ plot_rdi_pairs <- function(cds_subset, gene_pairs_mat,
     #   y <- y + rnorm(length(y), sd = 1e-10)
     # 
     ########################################################################################################################################################################
-    if(conditioning == T) {
-      # # do a linear line fitting
-      # df <- data.frame(y = y, z = z)
-      # full_model_fit <- VGAM::vglm(as.formula("y~z"), data = df, family=gaussianff())
-      # 
-      # y <- resid(full_model_fit)
-# # 
-#       data <- Reduce(cbind, list(x, y, z))
-# 
-#       xyz_kde <- kde(data, gridsize = c(25,25, 25))
-# 
-#       x_meshgrid <- xyz_kde$eval.points[[1]]
-#       y_meshgrid <- xyz_kde$eval.points[[2]]
-#       z_meshgrid <- xyz_kde$eval.points[[3]]
-# 
-#       den_res <- matrix(0, nrow = length(x_meshgrid), ncol = length(y_meshgrid))
-# 
-#       nConBins <- length(z_meshgrid)
-#       for(conBins in 1:nConBins) {
-#         den_res_tmp <- xyz_kde$estimate[, , conBins]
-#         den_res_tmp[!is.finite(den_res_tmp)] <- 0
-#         den_res <- den_res + den_res_tmp / (nConBins * sum(den_res_tmp))
-#       }
-# 
-#       den_x <- colSums(den_res) # just calculate the sum for each column
-    }
-    ########################################################################################################################################################################
-    if(conditioning) {
-      # exprs_res <- expression(paste("Target (", "y", phantom()[{
-      #   paste("t")
-      # }], "", "|", "y", phantom()[{
-      #   paste("t", phantom() - phantom(), "1")
-      # }], ")", ""))
-      # 
-      # rng_vec <- sort(z)[quantile(1:length(z), seq(0, 1, length.out = nConBins + 1))] #ensure each bin gets the same number of cells 
-      # den_res_array <- array(0, dim = c(dim_val, dim_val, nConBins))
-      # den_res <- matrix(0, nrow = dim_val, ncol = dim_val)
-      # 
-      # x_meshgrid <- c()
-      # y_meshgrid <- c()
-      # 
-      # for(conBins in 2:(nConBins + 1)) {
-      #   if(conBins != conBins) {
-      #     x_rng <- x[z >= rng_vec[conBins - 1] & z < rng_vec[conBins]]
-      #     y_rng <- y[z >= rng_vec[conBins - 1] & z < rng_vec[conBins]]
-      #   }
-      #   else {
-      #     x_rng <- x[z >= rng_vec[conBins - 1] & z <= rng_vec[conBins]]
-      #     y_rng <- y[z >= rng_vec[conBins - 1] & z <= rng_vec[conBins]]
-      #   }
-      #   
-      #   bandwidth <- c(MASS::bandwidth.nrd(x_rng), MASS::bandwidth.nrd(y_rng))
-      #   if(any(bandwidth == 0)) {
-      #     max_vec <- c(max(x_rng), max(y_rng))
-      #     bandwidth[bandwidth == 0] <- max_vec[bandwidth == 0] / dim_val
-      #   }
-      #   den_xy <- MASS::kde2d(x_rng, y_rng, n = c(dim_val, dim_val), lims = c(min(x), max(x), min(y), max(y)), h = bandwidth)
-      #   den_res_array[, , conBins - 1] <- den_xy$z# as.data.frame()
-      #   # dimnames(den_res) <- list(paste0("x_", as.character(den_xy$x)), paste0("y_", as.character(den_xy$y)))
-      #   # den_x_res <- density(x, n = round(length(x))/ 4, from = min(x), to = max(x))
-      #   # den_x <- den_x_res$y
-      #   
-      #   x_meshgrid <- den_xy$x
-      #   y_meshgrid <- den_xy$y
-      #   
-      #   # message('x_meshgrid is ', x_meshgrid)
-      #   # message('y_meshgrid is ', y_meshgrid)
-      # }
-      # max_ind <- 0
-      # tmp <- 0
-      # for(conBins in 1:(nConBins - 1)) {
-      #   if(tmp < sum(den_res_array[, , conBins]))
-      #     max_ind <- conBins
-      #   
-      #   tmp <- sum(den_res_array[, , conBins])
-      #   # den_res_tmp <- den_res_array[, , conBins]
-      #   # den_res_tmp[!is.finite(den_res_tmp)] <- 0
-      #   # den_res <- den_res + den_res_tmp / nConBins
-      #   # den_res <- den_res + den_res_tmp / (nConBins * sum(den_res_tmp)) 
-      # }
-      # den_res <- den_res_array[, , max_ind]
-      # 
-      # den_x <- rowSums(den_res) # just calculate the sum for each column 
-    } else {
+    # if(conditioning == T) {
+    #   # # do a linear line fitting
+    #   # df <- data.frame(y = y, z = z)
+    #   # full_model_fit <- VGAM::vglm(as.formula("y~z"), data = df, family=gaussianff())
+    #   # 
+    #   # y <- resid(full_model_fit)
+    #   # # 
+    #   #       data <- Reduce(cbind, list(x, y, z))
+    #   # 
+    #   #       xyz_kde <- kde(data, gridsize = c(25,25, 25))
+    #   # 
+    #   #       x_meshgrid <- xyz_kde$eval.points[[1]]
+    #   #       y_meshgrid <- xyz_kde$eval.points[[2]]
+    #   #       z_meshgrid <- xyz_kde$eval.points[[3]]
+    #   # 
+    #   #       den_res <- matrix(0, nrow = length(x_meshgrid), ncol = length(y_meshgrid))
+    #   # 
+    #   #       nConBins <- length(z_meshgrid)
+    #   #       for(conBins in 1:nConBins) {
+    #   #         den_res_tmp <- xyz_kde$estimate[, , conBins]
+    #   #         den_res_tmp[!is.finite(den_res_tmp)] <- 0
+    #   #         den_res <- den_res + den_res_tmp / (nConBins * sum(den_res_tmp))
+    #   #       }
+    #   # 
+    #   #       den_x <- colSums(den_res) # just calculate the sum for each column
+    # }
+    # ########################################################################################################################################################################
+    # if(conditioning) {
+    #   # exprs_res <- expression(paste("Target (", "y", phantom()[{
+    #   #   paste("t")
+    #   # }], "", "|", "y", phantom()[{
+    #   #   paste("t", phantom() - phantom(), "1")
+    #   # }], ")", ""))
+    #   # 
+    #   # rng_vec <- sort(z)[quantile(1:length(z), seq(0, 1, length.out = nConBins + 1))] #ensure each bin gets the same number of cells 
+    #   # den_res_array <- array(0, dim = c(dim_val, dim_val, nConBins))
+    #   # den_res <- matrix(0, nrow = dim_val, ncol = dim_val)
+    #   # 
+    #   # x_meshgrid <- c()
+    #   # y_meshgrid <- c()
+    #   # 
+    #   # for(conBins in 2:(nConBins + 1)) {
+    #   #   if(conBins != conBins) {
+    #   #     x_rng <- x[z >= rng_vec[conBins - 1] & z < rng_vec[conBins]]
+    #   #     y_rng <- y[z >= rng_vec[conBins - 1] & z < rng_vec[conBins]]
+    #   #   }
+    #   #   else {
+    #   #     x_rng <- x[z >= rng_vec[conBins - 1] & z <= rng_vec[conBins]]
+    #   #     y_rng <- y[z >= rng_vec[conBins - 1] & z <= rng_vec[conBins]]
+    #   #   }
+    #   #   
+    #   #   bandwidth <- c(MASS::bandwidth.nrd(x_rng), MASS::bandwidth.nrd(y_rng))
+    #   #   if(any(bandwidth == 0)) {
+    #   #     max_vec <- c(max(x_rng), max(y_rng))
+    #   #     bandwidth[bandwidth == 0] <- max_vec[bandwidth == 0] / dim_val
+    #   #   }
+    #   #   den_xy <- MASS::kde2d(x_rng, y_rng, n = c(dim_val, dim_val), lims = c(min(x), max(x), min(y), max(y)), h = bandwidth)
+    #   #   den_res_array[, , conBins - 1] <- den_xy$z# as.data.frame()
+    #   #   # dimnames(den_res) <- list(paste0("x_", as.character(den_xy$x)), paste0("y_", as.character(den_xy$y)))
+    #   #   # den_x_res <- density(x, n = round(length(x))/ 4, from = min(x), to = max(x))
+    #   #   # den_x <- den_x_res$y
+    #   #   
+    #   #   x_meshgrid <- den_xy$x
+    #   #   y_meshgrid <- den_xy$y
+    #   #   
+    #   #   # message('x_meshgrid is ', x_meshgrid)
+    #   #   # message('y_meshgrid is ', y_meshgrid)
+    #   # }
+    #   # max_ind <- 0
+    #   # tmp <- 0
+    #   # for(conBins in 1:(nConBins - 1)) {
+    #   #   if(tmp < sum(den_res_array[, , conBins]))
+    #   #     max_ind <- conBins
+    #   #   
+    #   #   tmp <- sum(den_res_array[, , conBins])
+    #   #   # den_res_tmp <- den_res_array[, , conBins]
+    #   #   # den_res_tmp[!is.finite(den_res_tmp)] <- 0
+    #   #   # den_res <- den_res + den_res_tmp / nConBins
+    #   #   # den_res <- den_res + den_res_tmp / (nConBins * sum(den_res_tmp)) 
+    #   # }
+    #   # den_res <- den_res_array[, , max_ind]
+    #   # 
+    #   # den_x <- rowSums(den_res) # just calculate the sum for each column 
+    # } else {
       bandwidth <- c(MASS::bandwidth.nrd(x), MASS::bandwidth.nrd(y))
       if(any(bandwidth == 0)) {
         max_vec <- c(max(x), max(y))
@@ -883,7 +820,7 @@ plot_rdi_pairs <- function(cds_subset, gene_pairs_mat,
 
       x_meshgrid <- den_xy$x
       y_meshgrid <- den_xy$y
-    }
+    # }
     
     max_ind <- 1
     
@@ -944,8 +881,38 @@ plot_rdi_pairs <- function(cds_subset, gene_pairs_mat,
 # gene_pairs_mat <- matrix(Olsson_gene_vec, nrow = 2)
 # plot_rdi_pairs(Olsson_granulocyte_cds, t(gene_pairs_mat), d = 1)
 
-# function to create the state space for three variables: 
-plot_ccm <- function(x, d = 1){
+#' Plot the shadow mainfold from the lagged coordinates from a single variable. 
+#' 
+#' This plot function uses time lagged coordinates of a single variable (gene) x, (x_{t}, x_{t - d}, x_{t - 2d}) to reconstruct a shadow manifold. This manifold can 
+#' be used for detecting causality.  
+#' 
+#' @param cds CellDataSet for the experiment
+#' @param gene_name The name for gene used to reconstruct the shadow manifold. The gene name should appear in the gene_short_name column of the cds object. 
+#' @param d The time delay between the source and target gene. 
+#' @return a ggplot2 plot object
+#' @import ggplot2
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
+#' @export
+#' @examples
+#' \dontrun{
+#' x_1 <- all_cell_simulation[1, , 1]
+#' x_2 <- all_cell_simulation[2, , 1]
+#' x_3 <- all_cell_simulation[3, , 1]
+#' 
+#' plot_ly(type = 'scatter3d', x = x_1, y = x_2, z = x_3, mode = 'markers', color = 1:length(x_1))
+#' lung <- load_lung() 
+#' gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+#' plot_shadow_manifold(lung, gene_pairs_mat[1])
+#' }
+#' @references Sugihara, George, et al. "Detecting causality in complex ecosystems." science 338.6106 (2012): 496-500.
+#' @export
+plot_shadow_manifold <- function(cds, gene_name, d = 1){
+  gene_id <- row.names(subset(fData(cds), gene_short_name %in% gene_name))
+
+  if(length(gene_id) == 0)
+    stop('Please make sure the gene name you provided in gene_pairs_mat exist in your data.')
+  
   if (is.numeric(x))
     x <- as.matrix(x)
   
@@ -961,23 +928,34 @@ plot_ccm <- function(x, d = 1){
 plot_gene_pair_delay <- function() {
   
 }
-# x_1 <- all_cell_simulation[1, , 1]
-# x_2 <- all_cell_simulation[2, , 1]
-# x_3 <- all_cell_simulation[3, , 1]
-# 
-# plot_ly(type = 'scatter3d', x = x_1, y = x_2, z = x_3, mode = 'markers', color = 1:length(x_1))
-# 
-# 
-# # 
-# d <- 10
-# x <- all_cell_simulation[2, , 1]
-# x_1 <- x[seq(1, length(x) - 2 * d, by = 1)]
-# x_2 <- x[seq(1 + d, length(x) - d, by = 1)]
-# x_3 <- x[seq(1 + 2 * d, length(x), by = 1)]
-# plot_ly(type = 'scatter3d', x = x_1, y = x_2, z = x_3, mode = 'markers', color = 1:length(x_3))
-# plot_ly(type = 'scatter3d', x = x_1, y = x_2, z = x_3, mode = 'markers')
-# plot_ly(type = 'scatter3d', x = log(exprs(neuron_sim_cds)['Pax6', ], y = log(exprs(neuron_sim_cds)['Mash1', ], z = log(exprs(neuron_sim_cds)['Hes5', ], color = 1:nrow(neuron_sim_cds), mode = 'markers')
 
+# 
+#' Plot the taylor diagram for the RDI, mutual information values. 
+#' 
+#' This plot function is the commomly used approach to visualize the relationship between a gene pair.
+#' Please check other plots for plot_lag_drevi, plot_cross_map, plot_rdi_pairs_heatmap, plot_comb_logic_heatmap,  
+#' This function accepts a matrix where each row is the gene pair and the first column is the hypothetical source 
+#' or regulator while the second column represents the hypothetical target. The name in this matrix should match 
+#' the name in the gene_short_name column of the cds object.
+#' 
+#' @param cds CellDataSet for the experiment
+#' @param gene_pairs_mat A matrix where each row is the gene pair and the first column is the hypothetical source or regulator while the second column represents the hypothetical target. The name in this matrix should match the name in the gene_short_name column of the cds object. 
+#' @param n_row number of columns used to layout the faceted cluster panels
+#' @param n_col number of columns used to layout the faceted cluster panels
+#' @return a ggplot2 plot object
+#' @import ggplot2
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
+#' @export
+#' @examples
+#' \dontrun{
+#' lung <- load_lung() 
+#' gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+#' plot_taylor_diagram(cds_exprs[1, ], seq(0, 1, length.out = 100), MI = seq(2, 3, length.out = 100), Entropy = seq(4, 5, length.out = 1))
+#' }
+#' @references 
+#' @export
+#' 
 # this function modifies the taylor.diagram function from plotrix package 
 plot_taylor_diagram <- function (ref, RDI, MI, Reference, add = FALSE, col = "red", pch = 19, pos.cor = TRUE, 
                             xlab = "Entropy", ylab = "MI", main = "RDI Taylor Diagram", show.gamma = TRUE, 
@@ -1179,10 +1157,34 @@ plot_taylor_diagram <- function (ref, RDI, MI, Reference, add = FALSE, col = "re
   invisible(oldpar)
 }
 
-# plot_taylor_diagram(cds_exprs[1, ], seq(0, 1, length.out = 100), MI = seq(2, 3, length.out = 100), Entropy = seq(4, 5, length.out = 1))
 
+#' Plot a heatmap to demonstrate the hypothetical time delay between any two genes 
+#' 
+#' This plot function uses the estimated turning_point for each gene in the CDS to estimate the time delay between any gene pairs. 
+#' It then plot the time delay using a heatmap. 
+#' 
+#' @param cds CellDataSet for the experiment
+#' @param gene_pairs_mat A matrix where each row is the gene pair and the first column is the hypothetical source or regulator while the second column represents the hypothetical target. The name in this matrix should match the name in the gene_short_name column of the cds object. 
+#' @param n_row number of columns used to layout the faceted cluster panels
+#' @param n_col number of columns used to layout the faceted cluster panels
+#' @return a ggplot2 plot object
+#' @import ggplot2
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
+#' @export
+#' @examples
+#' \dontrun{
+#' lung <- load_lung() 
+#' gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+#' plot_scatter_pairs(lung, gene_pairs_mat)
+#' }
+#' @export
+#' 
 # function to plot the time delay between each gene: 
 plot_time_delay_heatmap <- function(cds, use_gene_short_name = TRUE, cluster_row = TRUE, cluster_cols = TRUE) {
+  if(!("turning_point" %in% colnames(fData(cds)))) 
+    stop('Please first run the xxx function before running this function')
+  
   turning_point <- fData(cds)[, c('gene_short_name', 'turning_point')] 
   
   if(use_gene_short_name) {
@@ -1231,9 +1233,32 @@ plot_time_delay_heatmap <- function(cds, use_gene_short_name = TRUE, cluster_row
   grid::grid.draw(ph_res$gtable)
 }
 
+#' Plot the causal network inferred by Scribe 
+#' 
+#' This plot function uses state-of-art graph visualization tool (including Hive plot, hiearchy plot and arc diagram) to visualize the causal network. 
+#' 
+#' @param graph A igraph object describing inferred causal network 
+#' @param type A character describing which type of the plot will be used for making the network plot  
+#' @param layout A layout function which will only be used when we set type = 'igraph'. 
+#' @return a plot object
+#' @import ggplot2
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
+#' @export
+#' @examples
+#' \dontrun{
+#' lung <- load_lung() 
+#' gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+#' plot_causal_network(lung, gene_pairs_mat)
+#' }
+#' @references Hive plot, hiearchy plot and arc diagram plot, etc. 
+#' @export
+#' 
 # plot_time_delay_heatmap(lung, use_gene_short_name = F)
-
-plot_network <- function(graph, type = c('igraph', 'hiearchy', 'hive', 'arcdiagram'), layout = NULL, ...) {
+plot_causal_network <- function(graph, type = c('igraph', 'hiearchy', 'hive', 'arcdiagram'), layout = NULL, ...) {
+  if(class(graph) != 'igraph' | length(E(graph)) == 0)
+    stop('Please pass an igraph object for the graph object and make sure it has at least one edge')
+  
   if(type == 'igraph') {
     if(!is.null(layout)) {
       if(!is.function(layout)) {
@@ -1314,4 +1339,427 @@ plot_network <- function(graph, type = c('igraph', 'hiearchy', 'hive', 'arcdiagr
     #         show.nodes=TRUE, pch.nodes=21, cex.nodes=runif(10,1,3), 
     #         col.nodes="gray80", bg.nodes="gray90", lwd.nodes=2)
   }
+}
+
+#' Plot the relationship between the predicted value (\hat{x}(t) | M_y) and the observed x(t). 
+#' 
+#' This plotting function uses the simplex projection from the shadow manifold to estimate the source gene's value and then 
+#' plot against the observe value. If there is a true causality from x to y, the predicted point should match up with 
+#' the observed value pretty well. It also supports to plot the predicted value and the weighted target values based on 
+#' the nearest neighbors used in the simplex projection. This two different plots are controlled by the type argument, 
+#' where "Prediction" and "Relationship" corresponds to first and second plot respectively. This function accepts a matrix 
+#' where each row is the gene pair and the first column is the hypothetical source or regulator while the second column 
+#' represents the hypothetical target. The name in this matrix should match the name in the gene_short_name column of the 
+#' cds object.
+#' 
+#' @param cds CellDataSet for the experiment
+#' @param gene_pairs_mat A matrix where each row is the gene pair and the first column is the hypothetical source or regulator while the second column represents the hypothetical target. The name in this matrix should match the name in the gene_short_name column of the cds object. 
+#' @param tau the lag to use for time delay embedding (same as in the ccm function from the rEDM package)
+#' @param E the embedding dimensions to use for time delay embedding
+#' @param Type 
+#' @param verbose whether or not to print the warning messages to the R console
+#' @return a ggplot2 plot object
+#' @import ggplot2
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
+#' @export
+#' @examples
+#' \dontrun{
+#' lung <- load_lung() 
+#' gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+#' plot_scatter_pairs(lung, gene_pairs_mat)
+#' }
+#' @export
+#' 
+plot_cross_map <-function(cds_subset, gene_pairs_mat, tau = 1, E = 2, Type = c("Prediction", "Relationship"), verbose = FALSE, return_all = FALSE) 
+{
+  gene_pairs_mat <- as.matrix(gene_pairs_mat)
+  all_genes_in_pair <- as.vector(gene_pairs_mat)
+  if(! all(all_genes_in_pair %in% fData(cds_subset)$gene_short_name)) {
+    stop("cds_subset doesn't include all genes in gene_pairs_mat Make sure all genes are included in gene_short_name column of the cds")
+  }
+  
+  cds_subset <- cds_subset[row.names(subset(fData(cds_subset), gene_short_name %in% all_genes_in_pair)), ]
+  
+  Time <- ncol(cds_subset)
+  n_shadow <- Time - (E - 1)*tau # maximal number of points for shadow manifold 
+  
+  flat_res <- as.data.frame(matrix(0, nrow = n_shadow * 2 * nrow(gene_pairs_mat), ncol = 4))
+  colnames(flat_res) <- c("Observations", "Predictions", "Weighted_source", "Pair")
+  
+  id <- 0
+  for(gene_pairs_ind in 1:nrow(gene_pairs_mat))  {
+    # gene_pairs_ind <- 1
+    if(verbose)
+      message("current gene pair is ", gene_pairs_mat[gene_pairs_ind, 1], " -> ",  gene_pairs_mat[gene_pairs_ind, 2])
+    
+    gene_pairs <- gene_pairs_mat[gene_pairs_ind, ]
+    X <- as.numeric(exprs(cds_subset)[row.names(subset(fData(cds_subset), gene_short_name %in% gene_pairs[1])), ])# as.numeric(exprs(cds_subset)[gene_pairs[1], ])
+    Y <- as.numeric(exprs(cds_subset)[row.names(subset(fData(cds_subset), gene_short_name %in% gene_pairs[2])), ])
+    
+    laggedX<-gen_lagged_vec(X=X,E=E,tau=tau)
+    laggedY<-gen_lagged_vec(X=Y,E=E,tau=tau)
+    dists_x_all <- as.matrix(dist(laggedX$x))
+    dists_y_all <- as.matrix(dist(laggedY$x))
+    max_shadow <- dim(dists_x_all)[1]
+    # cor_x <- numeric(Time)
+    # cor_y <- numeric(Time)
+    
+    # for(L in (5+(E-1)*tau):Time) # why 5 + (E - 1) * tau here? 
+    # {   
+    L = Time
+    n_shadow <- L-(E-1)*tau
+    pred_x <- numeric(n_shadow)
+    pred_y <- numeric(n_shadow)
+    actual_x <- numeric(n_shadow)
+    actual_y <- numeric(n_shadow) 
+    
+    source_x <- numeric(n_shadow)
+    source_y <- numeric(n_shadow)
+    
+    # cor_x_tmp <- numeric(reps)
+    # cor_y_tmp <- numeric(reps)
+    
+    start <- 1
+    # if(randomWindow)
+    #     start <- sample(1:(max_shadow-n_shadow+1),1)
+    window <- start:(start+n_shadow-1)
+    
+    dists_x <- dists_x_all[window,window]
+    dists_y <- dists_y_all[window,window]
+    
+    x=laggedX$x[window,]
+    y=laggedY$x[window,]
+    nn_x <- get_nn(x,dists_x)
+    nn_y <- get_nn(y,dists_y)
+    
+    
+    for(i in 1:n_shadow)
+    {
+      ww <- calc_weights(x=x,dists=dists_x,index=i,nn=nn_x)
+      pred_y[i] <- predict_y(y=y,wt=ww)
+      actual_y[i] <- y[i,1]
+      source_x[i] <- predict_y(y=x,wt=ww)
+      
+      ww <- calc_weights(x=y,dists=dists_y,index=i,nn=nn_y)
+      pred_x[i] <- predict_y(y=x,wt=ww)
+      actual_x[i] <- x[i,1] 
+      source_y[i] <- predict_y(y=y,wt=ww)
+    }      
+    
+    # cor_x[L] <- cor(pred_x,actual_x)
+    # cor_y[L] <- cor(pred_y,actual_y)
+    
+    # cat(L,'\t',cor_x[L],'\t',cor_y[L],'\n')
+    
+    data <- data.frame(Observations = c(actual_x, actual_y), Predictions = c(pred_x, pred_y), 
+                       Weighted_source = c(source_y, source_x), 
+                       Pair = c(rep(paste0(gene_pairs[2], ' xmap ', gene_pairs[1]), n_shadow), 
+                                rep(paste0(gene_pairs[1], ' xmap ', gene_pairs[2]), n_shadow)), stringsAsFactors = FALSE)
+    
+    flat_res[(id + 1):(id + 2 * n_shadow), ] <- data
+    
+    id <- id + 2 * n_shadow
+  }
+  
+  flat_res$Pair <- factor(flat_res$Pair, levels = unique(flat_res$Pair))
+  
+  if(Type == 'Prediction')
+    g <- qplot(Observations, Predictions, data = flat_res, geom = 'point', log = 'xy', size = I(1), size = 2) +
+    xlab('') + ylab('') + geom_point(color = I("black"), size = I(0.85)) + geom_smooth(method = 'lm') + 
+    monocle:::monocle_theme_opts() + facet_wrap(~Pair, ncol = 2, scales = 'free') + geom_abline(color = 'red')
+  else if(Type == 'Relationship')
+    g <- qplot(Predictions, Weighted_source, data = res$res, geom = 'point', log = 'xy', size = I(1), size = 2) +
+    xlab('') + ylab('') + geom_point(color = I("black"), size = I(0.85)) + geom_smooth(method = 'loess') + 
+    monocle:::monocle_theme_opts() + facet_wrap(~Pair, ncol = 2, scales = 'free') + geom_abline(color = 'red')
+  
+  if(return_all) {
+    return(list(res = flat_res, g = g))
+  } else {
+    return(g)
+  }
+}
+
+meshgrid <- function (x, y = x) {
+  if (!is.numeric(x) || !is.numeric(y)) 
+    stop("Arguments 'x' and 'y' must be numeric vectors.")
+  x <- c(x)
+  y <- c(y)
+  n <- length(x)
+  m <- length(y)
+  X <- matrix(rep(x, each = m), nrow = m, ncol = n)
+  Y <- matrix(rep(y, times = n), nrow = m, ncol = n)
+  return(list(X = X, Y = Y))
+}
+
+# add the functionality to normalize either row or column for the data 
+#' Plot the heatmap for the expected value y(t) given x(t - d) and y(t - 1). 
+#' 
+#' This plotting function tries to intuitively visualize the informatioin transfer from x(t - d) to y(t) given y(t)'s previous state y(t - 1).
+#' Firstly, we divide the expression space for x(t - d) to y(t - 1) based on grid_num and then we estimate the k-nearest neighbor for each of the
+#' grid. We then use a Gaussian kernel to estimate the expected value for y(t). It is then displayed in two dimension with x(t - d) and y(t - 1)
+#' as two axis and the color represents the value of the expected of y(t) This function accepts a matrix where each row is the gene pair and the 
+#' first column is the hypothetical source or regulator while the second column represents the hypothetical target. The name in this matrix should 
+#' match the name in the gene_short_name column of the cds object.
+#' 
+#' @param cds_subset CellDataSet for the experiment
+#' @param gene_pairs_mat A matrix where each row is the gene pair and the first column is the hypothetical source or regulator while the second column represents the hypothetical target. The name in this matrix should match the name in the gene_short_name column of the cds object. 
+#' @param log A logic argument to determine whether or not we should log the data before we perform density estimation.
+#' @param d The time delay between the source gene and the target gene. 
+#' @param k The number of the nearest neighbors used in calculating the expectation value of y(t). 
+#' @param grid_num The number of grids used in estimating density. 
+#' @param n_row number of columns used to layout the faceted cluster panels
+#' @param n_col number of columns used to layout the faceted cluster panels
+#' @param scales 
+#' @return a ggplot2 plot object
+#' @import ggplot2
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
+#' @export
+#' @examples
+#' \dontrun{
+#' lung <- load_lung() 
+#' gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+#' plot_scatter_pairs(lung, gene_pairs_mat)
+#' }
+#' @export
+#' 
+# create the heatmap for the rdi value: 
+plot_rdi_pairs_heatmap <- function(cds_subset, gene_pairs_mat, 
+                                   log = FALSE, 
+                                   d = 1, 
+                                   k = 5, 
+                                   grid_num = 25,
+                                   n_row = NULL,
+                                   n_col = 1,
+                                   scales = "free",
+                                   verbose = FALSE) {
+  
+  gene_pairs_mat <- as.matrix(gene_pairs_mat)
+  all_genes_in_pair <- as.vector(gene_pairs_mat)
+  if(! all(all_genes_in_pair %in% fData(cds_subset)$gene_short_name)) {
+    stop("cds_subset doesn't include all genes in gene_pairs_mat Make sure all genes are included in gene_short_name column of the cds")
+  }
+  
+  cds_subset <- cds_subset[row.names(subset(fData(cds_subset), gene_short_name %in% all_genes_in_pair)), ]
+  
+  flat_res <- as.data.frame(matrix(0, nrow = grid_num^2  * nrow(gene_pairs_mat), ncol = 4))
+  colnames(flat_res) <- c("x", "z", "expected_y", "pair")
+  # xy <- data.frame()
+  
+  id <- 0
+  for(gene_pairs_ind in 1:nrow(gene_pairs_mat))  {
+    # gene_pairs_ind <- 1
+    if(verbose)
+      message("current gene pair is ", gene_pairs_mat[gene_pairs_ind, 1], " -> ",  gene_pairs_mat[gene_pairs_ind, 2])
+    
+    gene_pairs <- gene_pairs_mat[gene_pairs_ind, ]
+    f_ini_ind <- grid_num^2 * id #flat_res (normalized density results)
+    
+    gene_pair_name <- paste(gene_pairs[1], gene_pairs[2], sep = ' -> ')
+    
+    x <- matrix(exprs(cds_subset)[row.names(subset(fData(cds_subset), gene_short_name %in% gene_pairs[1])), ], ncol = 1)
+    y_ori <- matrix(exprs(cds_subset)[row.names(subset(fData(cds_subset), gene_short_name %in% gene_pairs[2])), ], ncol = 1)
+    
+    if(log) {
+      x <- log(x + 1)
+      y_ori <- log(y_ori + 1)
+    }
+    
+    if(d != 0) {
+      x  <- matrix(x[1:(nrow(x) - d), ], ncol = 1)
+      y <- matrix(y_ori[-(1:d), ], ncol = 1)
+      z <- y_ori[d:(nrow(y_ori) - 1), ]
+    }
+    else {
+      x  <- matrix(x, ncol = 1)
+      y <- matrix(y_ori, ncol = 1)
+      z <- y_ori
+    }
+    
+    if(length(unique(x)) < grid_num | length(unique(y)) < grid_num) {
+      # stop(paste0("Genes ", gene_pairs, "are required to express in at least ", grid_num, " cells"))
+      # x <- x + rnorm(length(x), sd = 1e-10)
+    }
+    
+    data <- data.frame(x = x, y = y, z = z)
+    
+    rng_x <- range(x)
+    rng_z <- range(z)
+    x_meshgrid <- seq(rng_x[1], rng_x[2], length.out = grid_num)
+    z_meshgrid <- seq(rng_z[1], rng_z[2], length.out = grid_num)
+    
+    xz_meshgrid <- meshgrid(x_meshgrid, z_meshgrid)
+    xz_query <- matrix(c(as.vector(xz_meshgrid$X), as.vector(xz_meshgrid$Y)), ncol = 2)
+    
+    knn_res <- RANN::nn2(data[, 1:2], query = xz_query, k = k + 1)
+    
+    dist_mat <- apply(knn_res$nn.idx, 1, function(x) {
+      abs(data[x[-1], 2] - data[x[1], 2])
+    })
+    dist_mat <- knn_res$nn.dists
+    
+    for(index in 1:nrow(dist_mat)) {
+      u <- exp(-dist_mat[index, -1]/ min(dist_mat[index, -1]))
+      w <- u / sum(u)
+      
+      subset_dat <- data[knn_res$nn.idx[index, -1], 2]
+      tmp <- sum(w * subset_dat)
+      flat_res[f_ini_ind + index, ] <- c(xz_query[index, ], tmp, gene_pair_name)
+    }
+    
+    # row-scale the data 
+    vals <- as.numeric(flat_res[c(f_ini_ind + 1):c(f_ini_ind + nrow(dist_mat)), 3])
+    max_val <- max(vals, na.rm = T) 
+    if(!is.finite(max_val))
+      max_val <- 1e10
+    
+    print(max_val)
+    for(index in 1:nrow(dist_mat)) {
+      flat_res[f_ini_ind + index, 3] <- as.numeric(flat_res[f_ini_ind + index, 3])  / max_val
+    }
+    
+    id <- id + 1
+  }
+  
+  flat_res[, 1:3] <- as.matrix(flat_res[, 1:3])
+  flat_res[, 4] <- factor(flat_res[, 4], levels = unique(flat_res[, 4]))
+  ggplot(aes(as.numeric(x), as.numeric(z)), data = flat_res) +  geom_raster(aes(fill = as.numeric(expected_y))) + 
+    scale_fill_gradientn(expression(paste("Expection (", "y", phantom()[{
+      paste("t")
+    }], ")", "")), colours = terrain.colors(10)) + 
+    # geom_rug(aes(as.numeric(x), as.numeric(y)), data = xy, col="darkred",alpha=.1) + 
+    # geom_path(aes(as.numeric(x), as.numeric(y)), data  = ridge_curve, color = 'red') + 
+    facet_wrap(~pair, scales = scales, nrow = n_row, ncol = n_col) + 
+    xlab( expression(paste("Source (", "x", phantom()[{
+      paste("t", phantom() - phantom(), d)
+    }], ")", ""))) + 
+    ylab(expression(paste("Target (", "y", phantom()[{
+      paste("t", phantom() - phantom(), "1")
+    }], ")", ""))) + monocle:::monocle_theme_opts()
+}
+
+#' Plot the combinatorial influence of two genes x, y to the target z. 
+#' 
+#' This plotting function tries to intuitively visualize the influence from genes x and y to the target z. 
+#' Firstly, we divide the expression space for x and y based on grid_num and then we estimate the k-nearest neighbor for each of the
+#' grid. We then use a Gaussian kernel to estimate the expected value for z. It is then displayed in two dimension with x and y
+#' as two axis and the color represents the value of the expected of z. This function accepts a matrix where each row is the gene pair
+#' and the target genes for this pair. The first column is the first hypothetical source or regulator, the second column represents 
+#' the second hypothetical target while the third column represents the hypothetical target gene. The name in this matrix should match 
+#' the name in the gene_short_name column of the cds object.
+#'  
+#' @param cds CellDataSet for the experiment
+#' @param gene_pairs_mat A matrix where each row is the gene pair and the first column is the hypothetical source or regulator while the second column represents the hypothetical target. The name in this matrix should match the name in the gene_short_name column of the cds object. 
+#' @param n_row number of columns used to layout the faceted cluster panels
+#' @param n_col number of columns used to layout the faceted cluster panels
+#' @return a ggplot2 plot object
+#' @import ggplot2
+#' @importFrom plyr ddply
+#' @importFrom reshape2 melt
+#' @export
+#' @examples
+#' \dontrun{
+#' lung <- load_lung() 
+#' gene_pairs_mat <- matrix(c('H19', 'Ccnd2', 'Ccnd2', 'Scnn1g'), ncol = 2)
+#' plot_scatter_pairs(lung, gene_pairs_mat)
+#' }
+#' @export
+#' 
+plot_comb_logic_heatmap <- function(cds_subset, gene_pairs_target_mat, 
+                                    log = FALSE, 
+                                    d = 1,
+                                    grid_num = 25,
+                                    n_row = NULL,
+                                    n_col = 1,
+                                    normalized = TRUE,
+                                    scales = "free",
+                                    verbose = FALSE) {
+  
+  gene_pairs_target_mat <- as.matrix(gene_pairs_target_mat)
+  all_genes_in_pair <- as.vector(gene_pairs_target_mat)
+  if(! all(all_genes_in_pair %in% fData(cds_subset)$gene_short_name)) {
+    stop("cds_subset doesn't include all genes in gene_pairs_target_mat Make sure all genes are included in gene_short_name column of the cds")
+  }
+  
+  cds_subset <- cds_subset[row.names(subset(fData(cds_subset), gene_short_name %in% all_genes_in_pair)), ]
+  
+  flat_res <- as.data.frame(matrix(0, nrow = grid_num^2  * nrow(gene_pairs_target_mat), ncol = 4))
+  colnames(flat_res) <- c("x", "y", "expected_z", "pair")
+  # xy <- data.frame()
+  
+  id <- 0
+  for(gene_pairs_ind in 1:nrow(gene_pairs_target_mat))  {
+    # gene_pairs_ind <- 1
+    if(verbose)
+      message("current gene pair is ",  paste0(gene_pairs[1], " : ", gene_pairs[2], " -> ", gene_pairs[3]))
+    
+    gene_pairs <- gene_pairs_target_mat[gene_pairs_ind, ]
+    f_ini_ind <- grid_num^2 * id #flat_res (normalized density results)
+    
+    gene_pair_name <- paste0(gene_pairs[1], " : ", gene_pairs[2], " -> ", gene_pairs[3])
+    
+    x <- matrix(exprs(cds_subset)[row.names(subset(fData(cds_subset), gene_short_name %in% gene_pairs[1])), ], ncol = 1)
+    y <- matrix(exprs(cds_subset)[row.names(subset(fData(cds_subset), gene_short_name %in% gene_pairs[2])), ], ncol = 1)
+    z <- matrix(exprs(cds_subset)[row.names(subset(fData(cds_subset), gene_short_name %in% gene_pairs[3])), ], ncol = 1)
+    
+    if(log) {
+      x <- log(x + 1)
+      y <- log(y + 1)
+      z <- log(z + 1)
+    }
+    
+    data <- data.frame(x = x, y = y, z = z)
+    
+    rng_x <- range(x)
+    rng_y <- range(y)
+    x_meshgrid <- seq(rng_x[1], rng_x[2], length.out = grid_num)
+    y_meshgrid <- seq(rng_y[1], rng_y[2], length.out = grid_num)
+    
+    xy_meshgrid <- meshgrid(x_meshgrid, y_meshgrid)
+    xy_query <- matrix(c(as.vector(xy_meshgrid$X), as.vector(xy_meshgrid$Y)), ncol = 2)
+    
+    knn_res <- RANN::nn2(data[, 1:2], query = xy_query, k = k + 1)
+    
+    dist_mat <- apply(knn_res$nn.idx, 1, function(x) {
+      abs(data[x[-1], 3] - data[x[1], 3])
+    })
+    dist_mat <- knn_res$nn.dists
+    
+    for(index in 1:nrow(dist_mat)) {
+      u <- exp(-dist_mat[index, -1]/ min(dist_mat[index, -1]))
+      w <- u / sum(u)
+      
+      subset_dat <- data[knn_res$nn.idx[index, -1], 3]
+      tmp <- sum(w * subset_dat)
+      flat_res[f_ini_ind + index, ] <- c(xy_query[index, ], tmp, gene_pair_name)
+    }
+    
+    # row-scale the data 
+    if(normalized) {
+      vals <- as.numeric(flat_res[c(f_ini_ind + 1):c(f_ini_ind + nrow(dist_mat)), 3])
+      max_val <- max(vals, na.rm = T) 
+      if(!is.finite(max_val))
+        max_val <- 1e10
+      
+      print(max_val)
+      for(index in 1:nrow(dist_mat)) {
+        flat_res[f_ini_ind + index, 3] <- as.numeric(flat_res[f_ini_ind + index, 3])  / max_val
+      }
+    }
+    
+    id <- id + 1
+  }
+  
+  flat_res[, 1:3] <- as.matrix(flat_res[, 1:3])
+  flat_res[, 4] <- factor(flat_res[, 4], levels = unique(flat_res[, 4]))
+  ggplot(aes(as.numeric(x), as.numeric(y)), data = flat_res) +  geom_raster(aes(fill = as.numeric(expected_z))) + 
+    scale_fill_gradientn(expression(paste("Expection (", "z", phantom()[{
+      paste("t")
+    }], ")", "")), colours = terrain.colors(10)) + 
+    # geom_rug(aes(as.numeric(x), as.numeric(y)), data = xy, col="darkred",alpha=.1) + 
+    # geom_path(aes(as.numeric(x), as.numeric(y)), data  = ridge_curve, color = 'red') + 
+    facet_wrap(~pair, scales = scales, nrow = n_row, ncol = n_col) + 
+    xlab( expression(paste("Source (", "x", ")", ""))) + 
+    ylab(expression(paste("Source (", "y", ")", ""))) + monocle:::monocle_theme_opts()
 }

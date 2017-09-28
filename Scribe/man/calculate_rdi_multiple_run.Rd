@@ -2,7 +2,7 @@
 % Please edit documentation in R/function.R
 \name{calculate_rdi_multiple_run}
 \alias{calculate_rdi_multiple_run}
-\title{calculate_rdi}
+\title{Calculate RDI value for multiple realization of directly related experiments}
 \usage{
 calculate_rdi_multiple_run(genes_data, run_vec = NULL, delays,
   super_graph = NULL, method = 1)
@@ -24,7 +24,9 @@ Note that the super_graph only accept integer matrix for now (each integer corre
 a list with four components: matrix for RDI (dimension is number of genes X length of delays times number of genes), vector of delays, max_rdi_value and max_rdi_delays
 }
 \description{
-This subroutine calculates RDI of Pseudo-time series expression data
+This subroutine estimates the RDI value for all gene-pair combination from the genes_data (or that specified in the super_graph) 
+in the pseudotime/time series data. If multiple directly related experiments are conducted, we can pass the information of each 
+experiment by the run_vec argument and this function will concatenate those experiments based on run_vec.
 }
 \details{
 \code{calculate_rdi} takes a time / Pseudo-time series expression data as well as the time lags and then calculate the restricted direct information between each pair of genes under different delays.

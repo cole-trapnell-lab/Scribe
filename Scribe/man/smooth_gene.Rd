@@ -4,7 +4,7 @@
 \alias{smooth_gene}
 \title{entropy}
 \usage{
-smooth_gene(expr_data, window_size)
+smooth_gene(expr_data, window_size = 40L)
 }
 \arguments{
 \item{R_x}{number of dimension}

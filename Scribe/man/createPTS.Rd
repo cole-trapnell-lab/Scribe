@@ -15,5 +15,5 @@ createPTS(cds, branch_points = NULL)
 a list storing the pseudo-time-series data and a vector storing the run id for each cell (row) in the data
 }
 \description{
-This function takes a cds (branched or not) and then convert to a pseudotime serious
+This function takes a cds (branched or not) and then convert to a pseudotime series.
 }

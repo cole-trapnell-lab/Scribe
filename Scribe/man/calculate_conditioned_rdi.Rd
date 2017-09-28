@@ -22,11 +22,16 @@ Note that the super_graph only accept integer matrix for now (each integer corre
 }
 \value{
 a dataframe storing conditional RDI results. First two columns are the id names for the genes.
-Third column is the conditional RDI value.
 }
 \description{
-This function estimates the RDI value for all gene-pair combination from the genes_data (or that specified in the super_graph) 
+This function estimates the conditional RDI value for all gene-pair combination from the genes_data (or that specified in the super_graph) 
 in the pseudotime/time series data, conditioned on the top top_incoming_k incoming nodes. 
 The result from the calculate_rdi function will be used to identify the proper delay for the gene-pair under test corresponds to that 
 with highest RDI as well as the proper delays for the k incoming nodes which corresponds to that with highest RDI values.
+}
+\examples{
+\dontrun{
+lung <- load_lung() 
+lung_update <- estimate_turning_point(lung, type = 'value')
+}
 }

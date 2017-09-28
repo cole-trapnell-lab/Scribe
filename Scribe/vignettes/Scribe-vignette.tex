@@ -81,8 +81,6 @@ Arman Rahimzamani\\[1em]University of Washington,\\ Seattle, Washington, USA\\
 
 
 
-
-
 \maketitle
 \begin{abstract}
 Cellular fate commitment is governed by hierarchical gene regulatory networks. Previous network inference approaches are inherently incapable of resolving complex causal relationships since they are designed for small-scale and static bulk measurements. Here we propose \Rpackage{Scribe}, a toolkit that employs \emph{Direct Information} to reconstruct causal regulatory networks using single-cell RNA-seq data. \Rpackage{Scribe} detects pairs of genes that interact and determines \emph{causality} through strength of \emph{information transfer} from one to the other. Our technique exploits the fact that an upstream regulatory gene's expression changes before its downstream targets undergo coherent changes. To calibrate the expected time lag between upstream and downstream genes, Scribe analyzes single-cell expression kinetics as the cells progress through pseudotime along a cellular trajectory.
@@ -194,7 +192,7 @@ The easiest way to visualize the pairwise causal gene interaction is to use \tex
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
 \hlcom{# we skip some functions below because they uses plotly package whose figures can be rendered in a pdf file }
-\hlkwd{plot_gene_pairs}\hlstd{(neuron_sim_cds,} \hlkwd{matrix}\hlstd{(}\hlkwd{c}\hlstd{(}\hlstr{'Zic1'}\hlstd{,} \hlstr{'Sox8'}\hlstd{,} \hlstr{'Brn2'}\hlstd{,} \hlstr{'Myt1L'}\hlstd{,} \hlstr{'Tuj1'}\hlstd{,} \hlstr{'Stat3'}\hlstd{),} \hlkwc{ncol} \hlstd{=} \hlnum{2}\hlstd{,} \hlkwc{byrow} \hlstd{= T))} \hlopt{+}
+\hlkwd{plot_lag_drevi}\hlstd{(neuron_sim_cds,} \hlkwd{matrix}\hlstd{(}\hlkwd{c}\hlstd{(}\hlstr{'Zic1'}\hlstd{,} \hlstr{'Sox8'}\hlstd{,} \hlstr{'Brn2'}\hlstd{,} \hlstr{'Myt1L'}\hlstd{,} \hlstr{'Tuj1'}\hlstd{,} \hlstr{'Stat3'}\hlstd{),} \hlkwc{ncol} \hlstd{=} \hlnum{2}\hlstd{,} \hlkwc{byrow} \hlstd{= T))} \hlopt{+}
   \hlstd{monocle}\hlopt{:::}\hlkwd{monocle_theme_opts}\hlstd{()} \hlopt{+} \hlstd{xacHelper}\hlopt{::}\hlkwd{nm_theme}\hlstd{()}
 \end{alltt}
 \end{kframe}
@@ -231,7 +229,7 @@ Moreover, in order to better represent the RDI values, we also implemented a gen
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
 \hlcom{# show the drevi plot result for all existing edges:}
-\hlkwd{plot_rdi_pairs}\hlstd{(neuron_sim_cds[,} \hlnum{1}\hlopt{:}\hlnum{200}\hlstd{],} \hlkwc{gene_pairs_mat} \hlstd{=} \hlkwd{as.matrix}\hlstd{(neuron_network[}\hlkwd{c}\hlstd{(}\hlnum{1}\hlstd{,} \hlnum{3}\hlstd{),} \hlnum{1}\hlopt{:}\hlnum{2}\hlstd{]),} \hlkwc{d} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{n_row} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{n_col} \hlstd{=} \hlnum{2}\hlstd{)} \hlopt{+}
+\hlkwd{plot_lag_drevi}\hlstd{(neuron_sim_cds[,} \hlnum{1}\hlopt{:}\hlnum{200}\hlstd{],} \hlkwc{gene_pairs_mat} \hlstd{=} \hlkwd{as.matrix}\hlstd{(neuron_network[}\hlkwd{c}\hlstd{(}\hlnum{1}\hlstd{,} \hlnum{3}\hlstd{),} \hlnum{1}\hlopt{:}\hlnum{2}\hlstd{]),} \hlkwc{d} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{n_row} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{n_col} \hlstd{=} \hlnum{2}\hlstd{)} \hlopt{+}
   \hlstd{monocle}\hlopt{:::}\hlkwd{monocle_theme_opts}\hlstd{()} \hlopt{+} \hlstd{xacHelper}\hlopt{::}\hlkwd{nm_theme}\hlstd{()}
 \end{alltt}
 \end{kframe}
@@ -242,7 +240,7 @@ Moreover, in order to better represent the RDI values, we also implemented a gen
 
 
 \begin{kframe}\begin{alltt}
-\hlkwd{plot_rdi_pairs}\hlstd{(neuron_sim_cds[,} \hlnum{1}\hlopt{:}\hlnum{200}\hlstd{],} \hlkwc{gene_pairs_mat} \hlstd{=} \hlkwd{matrix}\hlstd{(}\hlkwd{c}\hlstd{(}\hlstr{'Zic1'}\hlstd{,} \hlstr{'Sox8'}\hlstd{,} \hlstr{'Brn2'}\hlstd{,} \hlstr{'Myt1L'}\hlstd{),} \hlkwc{byrow} \hlstd{= T,} \hlkwc{nrow} \hlstd{=} \hlnum{2}\hlstd{),} \hlkwc{n_row} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{n_col} \hlstd{=} \hlnum{2}\hlstd{,} \hlkwc{scales} \hlstd{=} \hlstr{'free'}\hlstd{)} \hlopt{+}
+\hlkwd{plot_lag_drevi}\hlstd{(neuron_sim_cds[,} \hlnum{1}\hlopt{:}\hlnum{200}\hlstd{],} \hlkwc{gene_pairs_mat} \hlstd{=} \hlkwd{matrix}\hlstd{(}\hlkwd{c}\hlstd{(}\hlstr{'Zic1'}\hlstd{,} \hlstr{'Sox8'}\hlstd{,} \hlstr{'Brn2'}\hlstd{,} \hlstr{'Myt1L'}\hlstd{),} \hlkwc{byrow} \hlstd{= T,} \hlkwc{nrow} \hlstd{=} \hlnum{2}\hlstd{),} \hlkwc{n_row} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{n_col} \hlstd{=} \hlnum{2}\hlstd{,} \hlkwc{scales} \hlstd{=} \hlstr{'free'}\hlstd{)} \hlopt{+}
   \hlstd{monocle}\hlopt{:::}\hlkwd{monocle_theme_opts}\hlstd{()} \hlopt{+} \hlstd{xacHelper}\hlopt{::}\hlkwd{nm_theme}\hlstd{()}
 \end{alltt}
 \end{kframe}
@@ -465,7 +463,7 @@ In \Rpackage{Scribe}, we provided a variety of approaches to visualize the RDI n
 \hlcom{# load the network:}
 \hlkwd{load}\hlstd{(}\hlstr{"/Users/xqiu/Dropbox (Personal)/Projects/Monocle2_revision/RData/res"}\hlstd{)} \hlcom{#load the res (we need to mannually set the initial_nodes 1:2 in .process_graph1 function)}
 
-\hlkwd{plot_network}\hlstd{(res}\hlopt{$}\hlstd{g,} \hlkwc{type} \hlstd{=} \hlstr{'igraph'}\hlstd{,} \hlkwc{layout} \hlstd{= layout_in_circle)}
+\hlkwd{plot_causal_network}\hlstd{(res}\hlopt{$}\hlstd{g,} \hlkwc{type} \hlstd{=} \hlstr{'igraph'}\hlstd{,} \hlkwc{layout} \hlstd{= layout_in_circle)}
 \end{alltt}
 \end{kframe}
 
@@ -486,7 +484,7 @@ In \Rpackage{Scribe}, we provided a variety of approaches to visualize the RDI n
 
 
 \begin{kframe}\begin{alltt}
-\hlkwd{plot_network}\hlstd{(res}\hlopt{$}\hlstd{g,} \hlkwc{type} \hlstd{=} \hlstr{'arcdiagram'}\hlstd{)}
+\hlkwd{plot_causal_network}\hlstd{(res}\hlopt{$}\hlstd{g,} \hlkwc{type} \hlstd{=} \hlstr{'arcdiagram'}\hlstd{)}
 \end{alltt}
 \end{kframe}
 
@@ -889,7 +887,7 @@ In [Cite: Our Allerton paper] it's shown that this method works in many stochast
 \end{kframe}
 \end{knitrout}
 
- \section{Acknowledgements}
+\section{Acknowledgements}
 
 Scribe was written by Xiaojie Qiu which is based on the python package originally developed by Arman Rahimzamani, with substantial design input Cole Trapnell and Sreeram Kannan. The core of Scribe on estimating restricted direction information (RDI) is written in Rcpp for speed accerlationp. We are grateful to all members from Trapnell and Kannan lab, especially XXX for technical assistance, and Andysheh Mohajeri, Jonanthan Packer, XXX etc. for helpful discussions. This work was supported by  US National Institutes of Health (NIH) grants DP2 HD088158 (C.T.) and U54 DK107979 (C.T.), XXXXXX; C.T. is partly supported by a Dale. F. Frey Award for Breakthrough Scientists and an Alfred P. Sloan Foundation Research Fellowship.
 

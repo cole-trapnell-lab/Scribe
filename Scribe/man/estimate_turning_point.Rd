@@ -8,12 +8,23 @@ estimate_turning_point(cds_subset, type = c("order", "value"),
   branch_point = 1, cores = 1)
 }
 \arguments{
-\item{cds_subset}{a cds object after trajectory reconstruction}
+\item{cds_subset}{A cds object after trajectory reconstruction}
+
+\item{type}{A character determines whether or not we will return the order for the turning point or an actual value}
+
+\item{branch_point}{If the cds involves a branching process, we pass this argument to determine which branch point we should use for calculating the "turning point"}
+
+\item{cores}{Numer of cores to run this function}
 }
 \value{
-a updated cds with a newly added column (turning_point) in pData indicates the inflection or branch time point.
-to do: write a function to integrate BGP with Monocle
+A updated cds with a newly added column (turning_point) in pData indicates the inflection or branch time point.
 }
 \description{
 This function estimates the inflection point or the gene-wise branch point for each gene in a cell trajectory, without or with branch points respectively
+}
+\examples{
+\dontrun{
+lung <- load_lung() 
+lung_update <- estimate_turning_point(lung, type = 'value')
+}
 }
