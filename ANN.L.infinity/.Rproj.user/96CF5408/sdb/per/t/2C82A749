@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "---\ntitle: \"R Notebook\"\noutput: html_notebook\n---\n\nThis is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. \n\nTry executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. \n\n```{r}\nplot(cars)\n```\n\nAdd a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.\n\nWhen you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).\n",
+    "created" : 1488853713599.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2637482766",
+    "id" : "2C82A749",
+    "lastKnownWriteTime" : 1488853741,
+    "last_content_update" : 1488853741195,
+    "path" : "~/Desktop/Untitled.Rmd",
+    "project_path" : null,
+    "properties" : {
+        "chunk_output_type" : "inline",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}
