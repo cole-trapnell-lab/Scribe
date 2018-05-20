@@ -1,0 +1,16 @@
+"0","```r
+# exonic read (spliced) expression matrix
+emat <- dat$emat;
+# intronic read (unspliced) expression matrix
+nmat <- dat$iomat;
+# spanning read (intron+exon) expression matrix
+smat <- dat$smat;
+# filter expression matrices based on some minimum max-cluster averages
+emat <- filter.genes.by.cluster.expression(emat,cell.colors,min.max.cluster.average = 5)
+nmat <- filter.genes.by.cluster.expression(nmat,cell.colors,min.max.cluster.average = 1)
+smat <- filter.genes.by.cluster.expression(smat,cell.colors,min.max.cluster.average = 0.5)
+# look at the resulting gene set
+str(intersect(intersect(rownames(emat),rownames(nmat)),rownames(smat)))
+```"
+"1"," chr [1:5920] \"Dmd\" \"Rbfox1\" \"Dlg2\" \"Auts2\" \"Ctnna2\" \"Rbms3\" \"Gpc6\" \"Pard3b\" \"Dpyd\" \"Hdac9\" \"Celf2\" \"Erc2\" \"Camta1\" \"Adgrb3\" \"Dlgap2\" \"Exoc4\" \"Zbtb20\" \"Grik2\" ...
+"

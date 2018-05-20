@@ -1,0 +1,929 @@
+#function to generate new cds: 
+make_cds <- function (exprs_matrix, pd, fd, expressionFamily) {
+  cds <- newCellDataSet(exprs_matrix, 
+                        phenoData = new("AnnotatedDataFrame", data = pd), 
+                        featureData = new("AnnotatedDataFrame", data = fd), 
+                        expressionFamily = expressionFamily, 
+                        lowerDetectionLimit = 0.1)
+  
+  if(identical(expressionFamily, tobit())) {
+    cds <- estimateSizeFactors(cds)
+    cds <- estimateDispersions(cds)
+  }
+  return(cds)
+}
+
+# function to reproduce the smooth used by Arman
+# exprs: row: cell; column: gene
+move_avg_f <- function(exprs, window_size = 40) {
+  win_range <- nrow(exprs) - window_size
+  exprs_smooth <- exprs[-c(1:window_size), ]
+  
+  res <- apply(exprs, 2, function(x) {
+    tmp <- rep(0, win_range)
+    for(i in 0:(win_range)){
+      tmp[i + 1] <- mean(x[i + c(1:window_size)])
+    }
+    return(tmp)
+  })
+  
+  return(res)
+}
+
+# function to calculate direct information
+calculate_and_write_pairwise_di <- function(genes_data, delays = c(1,2,5,10,15,20,25), supergraph = NULL, cores = 1, verbose = F){
+  if(verbose) print("Calculating the Directed Mutual Information for each pair of genes...")
+  
+  cnt <- 0
+  N_operations <- nrow(genes_data) * (nrow(genes_data) - 1)
+  
+  pairwise_dmi_results <- c()
+  pairwise_corr_results <- c()
+  
+  tmp <- expand.grid(colnames(genes_data), colnames(genes_data), stringsAsFactors = F)
+  all_pairwise_gene <- tmp[as.character(tmp[, 1]) != as.character(tmp[, 2]), ] #don't calculate RDI on self-loop
+  
+  if(!is.null(supergraph)) { #consider the supergraph
+    all_pairwise_gene_paste <- paste(all_pairwise_gene[, 1], all_pairwise_gene[, 2])
+    supergraph_paste <- paste(supergraph[, 1], supergraph[, 2])
+    all_pairwise_gene <- all_pairwise_gene[all_pairwise_gene_paste %in% supergraph_paste, ]
+  }
+  
+  all_pairwise_gene_list <- split(all_pairwise_gene, row.names(all_pairwise_gene))
+  
+  #we may need to convert genes_data into sparseMatrix before passing to mclapply
+  res <- mclapply(all_pairwise_gene_list, function(x, genes_data, delays, N_operations) {
+    di <- computeTE(genes_data[, x[[1]]] + rnorm(nrow(genes_data), sd = 1e-12), genes_data[, x[[2]]] + rnorm(nrow(genes_data), sd = 1e-12), embedding = 3, k = 3, safetyCheck = T)
+    #computeTE(genes_data[, x[[1]]], genes_data[, x[[2]]], embedding = 3, k = 3) #calculate_rdi_corr
+    res <- data.frame(id_1 = x[[1]], id_2 = x[[2]],  delay = di$TE)
+    colnames(res)[3] <- paste('delays ', delays, sep = '')
+    res
+  }, genes_data = genes_data, delays = delays, N_operations = N_operations, mc.cores = cores)
+  
+  res <- do.call(rbind.data.frame, res)
+  row.names(res) <- paste(res$id_1, res$id_2, sep = '_')
+  return(res)
+}
+
+#function to run the ccm and save the result
+cal_cross_map <- function(ordered_exprs_mat, lib_colum, target_column, RNGseed = 2016, window_size = 1) { 
+  if(window_size != 1)
+    ordered_exprs_mat <- move_avg_f(ordered_exprs_mat, window_size)
+  lib_xmap_target <- ccm(ordered_exprs_mat, E = 2, random_libs = TRUE, lib_column = lib_colum, #ENSG00000122180.4
+                         target_column = target_column, lib_sizes = 25, num_samples = 25, RNGseed = RNGseed) #seq(10, 75, by = 5), num_samples = 300,
+  target_xmap_lib <- ccm(ordered_exprs_mat, E = 2, random_libs = TRUE, lib_column = target_column, #ENSG00000122180.4
+                         target_column = lib_colum, lib_sizes = 25, num_samples = 25, RNGseed = RNGseed)
+  
+  lib_xmap_target_means <- ccm_means(lib_xmap_target)
+  target_xmap_lib_means <- ccm_means(target_xmap_lib)
+  
+  return(list(lib_xmap_target = lib_xmap_target, target_xmap_lib = target_xmap_lib, 
+              lib_xmap_target_means = lib_xmap_target_means, target_xmap_lib_means = target_xmap_lib_means,
+              mean_lib_xmap_target_means = mean(lib_xmap_target_means$rho[is.finite(lib_xmap_target_means$rho)], na.rm = T), 
+              mean_target_xmap_lib_means = mean(target_xmap_lib_means$rho[is.finite(target_xmap_lib_means$rho)], na.rm = T)))
+}
+
+#function to plot the result from ccm
+plot_cross_map <- function(lib_xmap_target_means, target_xmap_lib_means, lib_name, target_name){
+  legend_names <- c(paste(lib_name, 'xmap', target_name), paste(target_name, 'xmap', lib_name))
+  
+  xmap_all <- rbind(lib_xmap_target_means, target_xmap_lib_means)
+  xmap_all$type <- c(rep('a_xmap_t_means', nrow(lib_xmap_target_means)), rep('t_xmap_a_means', nrow(target_xmap_lib_means)))
+  y_max <- max(xmap_all$rho, na.rm = T) + 0.1
+  
+  lib_rng <- range(xmap_all$lib_size)
+  p1 <- ggplot(aes(lib_size, pmax(0, rho)), data = xmap_all) + geom_line(aes(color = type)) + xlim(lib_rng) + 
+    xlab("Library Size") + ylab("Cross Map Skill (rho)") + scale_color_discrete(labels=legend_names) + 
+    scale_x_discrete(breaks = unique(xmap_all$lib_size)) + monocle_theme_opts()
+  
+  return(p1)
+}
+
+#parallel the CCM algorithm: 
+parallelCCM <- function(ordered_exprs_mat, cores = detectCores() / 2, window_size = 20) {
+  ordered_exprs_mat <- ordered_exprs_mat
+  combn_mat <- combn(1:ncol(ordered_exprs_mat), 2)
+  
+  combn_mat_split <- split(t(combn_mat), 1:ncol(combn_mat))
+  CCM_res <- mclapply(combn_mat_split, function(x, ordered_exprs_mat){ 
+    col_names <- colnames(ordered_exprs_mat)[x]
+    cross_map_res <- cal_cross_map(ordered_exprs_mat[, col_names], col_names[1], col_names[2])
+    cross_map_res[c('lib_xmap_target_means', 'target_xmap_lib_means')]
+  }, ordered_exprs_mat = ordered_exprs_mat, mc.cores = cores)
+  
+  return(list(CCM_res = CCM_res, combn_mat_split = combn_mat_split, gene_names = colnames(ordered_exprs_mat)))
+}
+
+#function to prepare the result for CCM: 
+prepare_ccm_res <- function(parallel_res, gene_names = NULL){
+  if(is.null(gene_names))
+    gene_names <- parallel_res$gene_names
+  parallel_res_list <- lapply(1:length(parallel_res$CCM_res), function(x, gene_names) {
+    lib_xmap_target_means <- parallel_res$CCM_res[[x]]$lib_xmap_target_means #mean of mean under different library
+    target_xmap_lib_means <- parallel_res$CCM_res[[x]]$target_xmap_lib_means #mean of mean under different library
+    lib_name <- parallel_res$combn_mat_split[[x]][1] 
+    target_name <- parallel_res$combn_mat_split[[x]][2] 
+    data.frame(lib_name = c(gene_names[lib_name], gene_names[target_name]),
+               target_name = c(gene_names[target_name], gene_names[lib_name]),
+               mean_rho = c(lib_xmap_target_means$rho, target_xmap_lib_means$rho))
+  }, as.character(gene_names))
+  
+  parallel_res_df <- do.call(rbind.data.frame, parallel_res_list)
+  parallel_res_mat <- dcast(parallel_res_df, lib_name ~ target_name, fun.aggregate=mean)
+  
+  row.names(parallel_res_mat) <- parallel_res_mat$lib_name
+  parallel_res_mat <- parallel_res_mat[, -1]
+  
+  parallel_res_mat[!is.finite(as.matrix(parallel_res_mat))] <- 0
+  diag(parallel_res_mat) <- 0
+  
+  return(parallel_res_mat)
+}
+
+#output format: Gene_1_ID Gene_1_NAME Gene_2_ID Gene_2_NAME delay_max RDI
+parallel_cal_grangertest <- function(exprs_data, cores =  detectCores() - 2, delays = 1, smoothing = T, filename = 'granger_res.txt') {
+  gene_name <- colnames(exprs_data)
+  combn_df <- combn(gene_name, m = 2)
+  split_combn_df <- split(t(combn_df), rep(1:ncol(combn_df), nrow(combn_df)))
+  
+  grangertest_res <- mclapply(split_combn_df, function(x, fname, dl, smooth = smoothing) {
+    subset_df <- exprs_data[, c(x)]
+    if(smooth){
+      subset_df <- move_avg_f(subset_df, window_size = 10)
+      subset_df <- as.data.frame(subset_df)
+    }
+    colnames(subset_df) <- c('x0', 'x1')
+    
+    res_df <- tryCatch({
+      res <- cal_grangertest(subset_df, delays = dl)
+      res
+    }, error = function(e){
+      print(e)
+      res <- data.frame(x0_by_x1 = -100,  x1_by_x0 = -100) #change this to -100 for cases where we throw numerical errors 
+      
+      res
+    })
+    
+    df <- data.frame(Gene_1_ID = c(x[1], x[2]), Gene_1_NAME = c(x[1], x[2]), Gene_2_ID = c(x[2], x[1]), Gene_2_NAME = c(x[2], x[1]), delay_max = NA, 
+                     granger = c(mean(res_df$x1_by_x0), mean(res_df$x0_by_x1)) )
+    write.table(file = fname, df, append = T, row.names = F, col.names = F, quote = F)
+    return(df)
+  }, mc.cores = cores, fname = filename, dl = delays, smooth = smoothing)
+  
+  return(grangertest_res)
+}
+
+#functions to perform granger tests using lmtest package: 
+# add new options to select a range of delays: 
+cal_grangertest <- function(ordered_exprs_mat, delays = 1) {
+  df <- data.frame(ordered_exprs_mat)
+  x0_by_x1 <- rep(0, length(delays))
+  x1_by_x0 <- rep(0, length(delays))
+  
+  for(i in 1:length(delays)) {
+    
+    x0_by_x1[i] <- grangertest(x0 ~ x1, order = delays[i], data = df)$`Pr(>F)`[2]
+    x1_by_x0[i] <- grangertest(x1 ~ x0, order = delays[i], data = df)$`Pr(>F)`[2]    
+  }
+  
+  return(data.frame(x0_by_x1 = max(x0_by_x1), 
+                    x1_by_x0 = max(x1_by_x0)))
+}
+
+#functions to perform granger tests using VAR package: 
+cal_grangertest_var <- function(ordered_exprs_mat, order = 1) {
+  var <- VAR(ordered_exprs_mat, p = order, type = "const")
+  x1_by_x0 <- causality(var, cause = "x0")$Granger
+  x0_by_x1 <- causality(var, cause = "x1")$Granger
+  
+  return(data.frame(x0_by_x1 = x0_by_x1$p.value, 
+                    x1_by_x0 = x1_by_x0$p.value))
+}
+
+#function to implement the so called MAGIC method: 
+diffusion_maps <- function (data, bw_ini = 0, pseudo_cnt = 1, neighbours = 0.2,
+                            log2_data = F, max_components = 3) {
+  if (log2_data)
+    data <- t(log2(data + pseudo_cnt))
+  else data <- t(data)
+  data_dm_bw_res <- diffusion_maps_bw(data, pseudo_cnt = pseudo_cnt,
+                                      neighbours = neighbours, bw_ini = 0, iter = 100, step = 0.02,
+                                      log2_data = log2_data)
+  bw = 10^(0.2 * (which(data_dm_bw_res$av_d_sigma == max(data_dm_bw_res$av_d_sigma)) +
+                    1))
+  nn <- ceiling(nrow(data) * neighbours)
+  d2 <- as.matrix(dist(data)^2)
+  sigma <- bw^2
+  W <- exp(-d2/(2 * sigma))
+  R <- apply(d2, 2, function(x) sort(x)[nn])
+  R <- matrix(rep(R, ncol(d2)), ncol = ncol(d2))
+  W <- (d2 < R) * W
+  W <- W + t(W)
+  D <- colSums(W, na.rm = T)
+  q <- D %*% t(D)
+  diag(W) <- 0
+  H <- W/q
+  colS <- colSums(H)
+  Hp <- t(t(H)/colS)
+  E <- eigen(Hp)
+  eigOrd <- order(Re(E$values), decreasing = TRUE)
+  E$values <- E$values[eigOrd][-1]
+  E$vectors <- E$vectors[, eigOrd][, -1]
+  rownames(E$vectors) <- rownames(data)
+  colnames(E$vectors) <- 1:ncol(E$vectors)
+  diffMap <- t(E$vectors)
+  return(t(diffMap[1:max_components, ]))
+}
+
+get_ka_dist <- function(X, K = 5) {
+  N <- ncol(X)
+  norm_sq <- repmat(t(colSums(X^2)), N, 1)
+  dist_sq <- norm_sq + t(norm_sq) - 2 * t(X) %*% X
+  sort_idx <- t(apply(dist_sq, 2, function(x) sort(x, index.return = T)$ix ))
+  knn_idx <- sort_idx[, c(1, K + 1)]
+  
+  distance <- apply(knn_idx, 1, function(ind_vec) sqrt(sum((X[, ind_vec[1]] - X[, ind_vec[2]])^2)) )
+  
+  return(distance)
+}
+
+#implement based on DPT
+# D: row: cell; column genes
+library(RANN)
+library(expm) 
+MAGIC_R <- function(D, kernel='gaussian', n_pca_components=2, random_pca=True, 
+                    t=6, knn=30, knn_autotune=10, epsilon=1, rescale=99, k_knn=100, perplexity=30,
+                    var_explained = 0.75) {
+  #library size normalization
+  Libsize <- rowSums(D)
+  D_norm <- D / Libsize * median(Libsize)
+  
+  #PCA
+  res <- prcomp(D_norm, center = T, scale = F)
+  
+  #select only the top 
+  std_dev <- res$sdev 
+  pr_var <- std_dev^2
+  prop_varex <- pr_var/sum(pr_var)
+  
+  D_pca <- res$x[, 1:max(n_pca_components, min(which(cumsum(prop_varex) >= var_explained)))]
+  
+  # #𝐷𝑖𝑠𝑡 = 𝑐𝑜𝑚𝑝𝑢𝑡𝑒_𝑑𝑖𝑠𝑡𝑎𝑛𝑐𝑒_𝑚𝑎𝑡𝑟𝑖𝑥(𝐷)
+  # Dist <- as.matrix(dist(D_pca))
+  # # 𝜎 𝑖 ￼ = 𝑑𝑖𝑠𝑡𝑎𝑛𝑐𝑒(𝑖, 𝑛𝑒𝑖𝑔h𝑏𝑜𝑟 𝑖, 𝑘𝑎 )
+  # sigma <- get_ka_dist(X = t(D_pca), K = ka)
+  # #𝐴 = 𝑐𝑜𝑚𝑝𝑢𝑡𝑒_𝑎𝑓𝑓𝑖𝑛𝑖𝑡𝑦_𝑚𝑎𝑡𝑟𝑖𝑥(𝐷𝑖𝑠𝑡)
+  # A <- exp(- (Dist / sigma)^2 )
+  # A <- A + t(A)
+  # #𝑀 = 𝑐𝑜𝑚𝑝𝑢𝑡𝑒_𝑚𝑎𝑟𝑘𝑜𝑣_𝑎𝑓𝑓𝑖𝑛𝑖𝑡𝑦_𝑚𝑎𝑡𝑟𝑖𝑥(𝐴)
+  # M <- A / rowSums(A)
+  
+  L <- compute_markov(D_pca, knn=knn, epsilon=epsilon, 
+                      distance_metric='euclidean', knn_autotune=knn_autotune)
+  
+  #D_imputed = M^t * D
+  D_imputed <- as.matrix(L) %^% t %*% D
+  #D_rescaled = Rescale(D_imputed)
+  D_rescaled <- t(t(D_imputed) * (apply(D, 2, function(x) quantile(x, 0.99)) ) / rowMax(t(D_imputed)))
+  #Dimputed = D_rescaled
+  return(D_rescaled)
+}
+
+# update the section on calculating the Markov matrix
+compute_markov <- function(data, knn = 10, epsilon = 1, distance_metric = 'euclidean', knn_autotune = 0) {
+  N <- nrow(data)
+  #Nearest neighbors
+  nbrs <- RANN::nn2(data, k = knn)
+  distances <- nbrs$nn.dists
+  indices =  nbrs$nn.idx
+  if(knn_autotune > 0) {
+    print('Autotuning distance')
+    
+    for(j in rev(1:N)) {
+      temp <- sort(distances[j, ])
+      lMaxTempIdxs = min(knn_autotune + 1, length(temp))
+      if(lMaxTempIdxs == 1 | temp[lMaxTempIdxs] == 0)
+        distances[j, ] <- 0
+      else
+        distances[j, ] <- distances[j, ] / temp[lMaxTempIdxs]
+    }
+  }
+  
+  rows <- rep(0, N * knn)
+  cols <- rep(0, N * knn)
+  dists <- rep(0, N * knn)
+  location <- 1
+  
+  for(i in 1:N) {
+    inds <- location:(location + knn - 1)
+    rows[inds] <- indices[i, ]
+    cols[inds] <- i
+    dists[inds] <- distances[i, ]
+    location <- location + knn
+  }
+  
+  if(epsilon > 0)
+    W <- sparseMatrix(rows, cols, x = dists, dims = c(N, N))
+  else
+    W <- sparseMatrix(rows, cols, x = rep(1, nrow(dist) * ncol(dist)), dims = c(N, N))
+  
+  #Symmetrize W
+  W <- W + t(W)
+  if(epsilon > 0){
+    # Convert to affinity (with selfloops)
+    tmp <- which(as.matrix(W) > 0, arr.ind = T)
+    rows <- tmp[, 1]
+    cols <- tmp[, 2]
+    dists <- W[tmp]
+    rows <- c(rows, 1:N)
+    cols <- c(cols, 1:N)
+    dists <- c(dists/(epsilon^2), rep(0, N))
+    W <- sparseMatrix(rows, cols, x = exp(-dists), dims = c(N, N))
+  }
+  
+  # Create D
+  D <- rowSums(W)
+  D[D != 0] <- 1 / (D[D != 0])
+  
+  #markov normalization
+  T <- sparseMatrix(1:N, 1:N, x = D, dims = c(N, N)) %*% W
+  return(T)
+}
+
+#   function(D, kernel='gaussian', n_pca_components=20, random_pca=True, 
+#                     t=6, k#run roc curve
+generate_roc_df <- function(p_value, classification, type = 'fpr') {
+  library(ROCR)
+  p_value[is.na(p_value)] <- 1
+  pred_p_value <- prediction(p_value, classification)
+  perf_tpr_fpr <- performance(pred_p_value, "tpr", "fpr")
+  
+  fpr = perf_tpr_fpr@x.values
+  
+  tpr = perf_tpr_fpr@y.values
+  
+  perf_auc <- performance(pred_p_value, "auc")
+  auc <- perf_auc@y.values
+  
+  data.frame(tpr = tpr, fpr = fpr, auc = auc)
+}
+
+# simulate the dropout and convert to poisson or negative binomial distribution 
+# simulate <- function(E,# simulate the dropout and convert to poisson or negative binomial distribution# # #  
+# simulate <- function(E,){
+#   
+# ar_explained = 0.75) {
+#   #library size normalization
+#   Libsize <- rowSums(D)
+#   D_norm <- D / Libsize * median(Libsize)
+# 
+#   #PCA
+#   res <- prcomp(D_norm, center = T, scale = F)
+#   
+#   #select only the top 
+#   std_dev <- res$sdev 
+#   pr_var <- std_dev^2
+#   prop_varex <- pr_var/sum(pr_var)
+#   
+#   D_pca <- res$x[, 1:max(n_pca_components, min(which(cumsum(prop_varex) >= var_explained)))]
+#   
+#   # #𝐷𝑖𝑠𝑡 = 𝑐𝑜𝑚𝑝𝑢𝑡𝑒_𝑑𝑖𝑠𝑡𝑎𝑛𝑐𝑒_𝑚𝑎𝑡𝑟𝑖𝑥(𝐷)
+#   # Dist <- as.matrix(dist(D_pca))
+#   # # 𝜎 𝑖 ￼ = 𝑑𝑖𝑠𝑡𝑎𝑛𝑐𝑒(𝑖, 𝑛𝑒𝑖𝑔h𝑏𝑜𝑟 𝑖, 𝑘𝑎 )
+#   # sigma <- get_ka_dist(X = t(D_pca), K = ka)
+#   # #𝐴 = 𝑐𝑜𝑚𝑝𝑢𝑡𝑒_𝑎𝑓𝑓𝑖𝑛𝑖𝑡𝑦_𝑚𝑎𝑡𝑟𝑖𝑥(𝐷𝑖𝑠𝑡)
+#   # A <- exp(- (Dist / sigma)^2 )
+#   # A <- A + t(A)
+#   # #𝑀 = 𝑐𝑜𝑚𝑝𝑢𝑡𝑒_𝑚𝑎𝑟𝑘𝑜𝑣_𝑎𝑓𝑓𝑖𝑛𝑖𝑡𝑦_𝑚𝑎𝑡𝑟𝑖𝑥(𝐴)
+#   # M <- A / rowSums(A)
+#   
+#   L <- compute_markov(D_pca, knn=knn, epsilon=epsilon, 
+#                  distance_metric='euclidean', knn_autotune=knn_autotune)
+#   
+#   #D_imputed = M^t * D
+#   D_imputed <- L^t %*% D
+#   #D_rescaled = Rescale(D_imputed)
+#   D_rescaled <- D_imputed * (apply(D, 1, function(x) as.matrix(t)quanile(x, 0.99)) ) / rowMax(D_imputed)
+#   
+#   #Dimputed = D_rescaled
+#   return(D_rescaled)
+# }
+
+###############################################################################################################################################################################################
+#run pscl's zeroinfl function to calculate the expected zero values 
+###############################################################################################################################################################################################
+# #use the moving average with the hurdle/zeroinfl model for data fitting:
+# pscl_smooth_genes <- function(exprs, window_size = 40) {
+#   win_range <- nrow(exprs) - window_size
+#   exprs_smooth <- exprs[-c(1:windo #use the moving average with the hurdle/zeroinfl model for data fitting# pscl_smooth_genes <- function(exprs, window_size = 40) {
+#   win_range <- nrow(exprs) - window_size
+#   exprs_smooth <- exprs[-c(1:windo #use the moving average with the hurdle/zeroinfl model for data fitting:
+#  {
+#     tmp <- rep(NA, # pscl_smooth_genes <- function(exprs, window_size = 40) {
+# #   win_range <- nrow(exprs) - window_size
+# = round(x[i + c(1:window_size)]))
+#       # print(x)
+#       tryCatch({
+#         tmp[i + 1] <- zeroinfl(expression ~ 1, data = df)$fitted.values
+#         tmp
+#       },
+#       #warning = function(w) { FM_fit },
+#       error = function(e) {
+#         # tmp[i + 1] <- glm.nb(expression ~ 1, data = df)$fitted.values
+#         # tmp
+#       })
+#       if(is.na(tmp[i + 1]))
+#         tmp[i + 1] <- glm.nb(expression ~ 1, data = df)$fitted.values
+#     }
+#     return(tmp)
+#   })
+#   
+#   return(res)
+# th <- exprs[-c(1:window_size), ]
+
+# res <- apply(exprs, 2, function(x) {
+#   tmp <- rep(NA, win_range)
+#   for(i in 0:(win_range)){
+#     df <- data.frame(expression = round(x[i + c(1:window_size)]))
+#     # print(x)
+#     tryCatch({
+# # ## res <- apply(exprs, 2, function(x) {
+#   tmp <- rep(NA, win_range)
+#   for(i in 0:(win_range)){
+#     df <- data.frame(expression = round(x[i + c(1:window_size)]))
+#     # print(x)
+#print(x)
+#      tryCatch({
+#print(x)
+#       tryCatch({
+#         tmp[i + 1] <- exp(zeroinfl(expression ~ 1, data = df)$coefficients$count)
+#         tmp
+#       },
+#       #warning = function(w) { FM_fit },
+#       error = function(e) {
+#         # tmp[i + 1] <- glm.nb(expression ~ 1, data = df)$fitted.values
+#         # tmp
+#       })
+#       if(is.na(tmp[i + 1]))
+#         tmp[i + 1] <- glm.nb(expression ~ 1, data = df)$fitted.values
+#     }
+#     return(tmp)
+#   })
+#   
+#   return(res)
+# # graph 
+#   g <- graph_from_adjacency_matrix(as.matrix(RDI_matrix), mode = "directed", weighted = T)
+
+#   #normalize the weight by the maximal incoming weight: 
+#   neighbor_nodes <- neighborhood(g, mode = mod# graph 
+#   g <- graph_from_adjacency_matrix(as.matrix(RDI_matrix), mode = "directed", weighted = T)
+#   
+#   #normalize the weight by the maximal incoming weight: 
+#   neighbor_nodes <- neighborhood(g, mode = mode)
+#   names(neighbor_nodes) <- V(g)$name
+#   
+#   for(i in names(neighbor_nodes)) {
+#     if(mode == 'in') {
+#       edge_name <- paste(neighbor_nodes[[i]]$name, i, sep = '|') #get the
+#     }
+#     else if(mode == 'out') {
+#       edge_name <- paste(i, neighbor_nodes[[i]]$name, sep = '|') #get the
+#     }
+#     
+#     weight_vec <- E(g1)[edge_name]$weight
+#     
+#     weight_vec_norm <- weight_vec / max(weight_vec)
+#     E(g1)[edge_name]$weight <- weight_vec_norm #normalize the expression by the maximal value 
+#     
+#     RDI_matrix[neighbor_nodes[[i]]$name, i] <- weight_vec_norm
+#   }
+#   
+#   return(list(normalized_rdi_matrix = RDI_matrix, g = g))
+# dd theta 
+#   res <- apply(sim_data, 2, function(x) {
+#     tmp <- x / sum(x)
+#     tmp <- round(tmp * avg_transcripts / mean(tmp))
+#   })
+
+#   unique_counts <- unique(unlist(as.data.frame(res)))
+#   for(i in names(unique_counts)){
+#     #dropout_rate = (1 - c)^n
+#     tmp_vec <- rep(as.numeric(i), unique_counts[i])
+#     tmp_vec[sample(unique_counts[i], (1 - capture_rate)^as.numeric(i))] <- 0 
+#     res[unique_counts == as.numeric(i)] <- tmp_vec
+#   }
+
+#   #sample_ind <- sample(1:length(tmp), dropout_rate * length(tmp))
+#   #tmp[sample_ind] <- 0 
+
+#   res <- apply(res * capture_rate, 1, function(x, mode = method, n_cell = ncol(res)) {
+#     if(mode == 'rank') {
+#       order_ind <- order(x)
+#       x[order_ind] <- sort(rpois(n = n_cell, lambda = mean(x)))
+#     }
+#     else if(mode == 'naive') {
+#       for(y in 1:length(x))
+#         x[y] <- rpoisson(n = 1, lambda = x[y])
+#     }
+
+#     x
+#   })
+
+#   return(res)
+# }
+
+# functions to process the RDI network when we get it: 
+
+quantile_selection_network <- function(rdi_network, prob = 0.95, experiment) 
+{
+  if(class(rdi_network) != 'data.frame')
+    stop('the rdi network should be a data frame with row / column names included')
+  
+  rdi_network_q <- quantile(unlist(rdi_network), probs = prob)
+  rdi_network_q_process <- rdi_network; rdi_network_q_process[rdi_network < rdi_network_q] <- 0
+  
+  graph_res <- igraph::graph_from_adjacency_matrix(as.matrix(rdi_network_q_process), mode = 'directed', weighted = T)
+  
+  # plot using ggraph
+  dg <- decompose.graph(graph_res)
+  e <- as.data.frame(get.edgelist(dg[[1]])); colnames(e) <- c('Source', 'Target'); e$type <- experiment
+  
+  write.table(file = paste0('/Users/xqiu/Dropbox (Personal)/Projects/Causal_network/causal_network/Cytoscape/', 
+                            experiment, '_edge.txt'), e, sep = '\t', quote = F, col.names = T, row.names = F)
+  
+  return(e)
+}
+DPT <- function (dm, tips = random_root(dm), ..., w_width = 0.1){
+  if (!is(dm, "DiffusionMap")) 
+    stop("dm needs to be of class DiffusionMap, not ", class(dm))
+  if (!length(tips) %in% 1:3) 
+    stop("you need to spcify 1-3 tips, got ", length(tips))
+  dpt <- destiny:::dummy_dpt(dm)
+  all_cells <- seq_len(nrow(dpt))
+  stats <- destiny:::tipstats(dpt, all_cells, tips)
+  branches <- auto_branch(dpt, all_cells, stats, w_width)
+  colnames(branches$branch) <- paste0("Branch", seq_len(ncol(branches$branch)))
+  colnames(branches$tips) <- paste0("Tips", seq_len(ncol(branches$tips)))
+  dpt@branch <- branches$branch
+  dpt@tips <- branches$tips
+  dpt
+}
+auto_branch <- function (dpt, cells, stats, w_width, nmin = 10L, gmin = 1) {
+  n <- length(cells)
+  stopifnot(n >= nmin)
+  stopifnot(stats$g >= gmin)
+  branches <- destiny:::cut_branches(dpt[cells, stats$tips], cells, w_width)
+  branch <- matrix(destiny:::idx_list_to_vec(branches, cells, n), n,
+                   1L)
+  tips <- matrix(logical(n), n, 1L)
+  tips[match(stats$tips, cells), 1L] <- TRUE
+  subs <- mapply(function(idx_sub, i) {
+    if (length(idx_sub) < nmin || !i %in% idx_sub)
+      return(NULL)
+    sub_stats <- destiny:::tipstats(dpt, idx_sub, i)
+    if (sub_stats$g < gmin)
+      return(NULL)
+    auto_branch(dpt, idx_sub, sub_stats, w_width, nmin, gmin)
+  }, branches, stats$tips, SIMPLIFY = FALSE)
+  nonnull_subs <- vapply(subs, Negate(is.null), logical(1L))
+  if (any(nonnull_subs)) {
+    n_sublevels <- do.call(max, lapply(subs[nonnull_subs],
+                                       function(s) ncol(s$branch)))
+    branch <- cbind(branch, matrix(NA_integer_, n, n_sublevels))
+    tips <- cbind(tips, matrix(NA, n, n_sublevels))
+    for (s in which(nonnull_subs)) {
+      sub <- subs[[s]]
+      idx_sub <- branches[[s]]
+      idx_newcol <- seq.int(ncol(branch) - n_sublevels +
+                              1L, length.out = ncol(sub$branch))
+      stopifnot(ncol(sub$branch) == ncol(sub$tips))
+      branch_offset <- max(branch, na.rm = TRUE)
+      branch[match(idx_sub, cells), idx_newcol] <- sub$branch +
+        branch_offset
+      tips[match(idx_sub, cells), idx_newcol] <- sub$tips
+    }
+  }
+  stopifnot(ncol(branch) == ncol(tips))
+  list(branch = branch, tips = tips)
+}
+run_new_dpt <- function(cds, norm_method = 'none', root = NULL, color_by = 'Cell_type'){
+  message('root should be the id to the cell not the cell name ....')
+  norm_data <- monocle:::normalize_expr_data(cds, norm_method = norm_method)
+  norm_data <- t(norm_data)
+  norm_data <- as.matrix(norm_data)
+  duplicated_genes <- which(base::duplicated.array(norm_data))
+  norm_data[duplicated_genes, 1] <- norm_data[duplicated_genes, 1] + rnorm(length(duplicated_genes), 0, 1)
+  dm <- DiffusionMap(norm_data)
+  dpt <- DPT(dm)
+  ts <- dm@transitions
+  M <- destiny:::accumulated_transitions(dm)
+  if(is.null(root)){
+  }
+  else{
+    dm <- DiffusionMap(norm_data)
+    dpt <- DPT(dm, tips = root)
+  }
+  if('Hours' %in% colnames(pData(cds)))
+    pData(cds)$Hours <- pData(cds)[, color_by]
+  p1 <- qplot(DM$DC1, DM$DC2, colour = pData(cds)$Hours)
+  branch <- dpt@branch
+  if(is.null(root))
+    root <- which.min(pData(cds)$Pseudotime)
+  pt <- dpt[root, ]
+  dp_res <- list(dm = dm, pt = pt, ts = ts, M = M, ev = dm@eigenvectors, p1 = p1, branch = branch)
+  return(dp_res)
+}
+
+# function to calculate the AUC / ROC curve for 
+calStatistics <- function(data, reference_network_pvals, sd = 0) {
+  run_ids <- as.character(unique(data$V2)) #get the sample RUN ids
+  
+  # collect the RDI and cRDI network for each run
+  RDI_parallel_res_list <- list()
+  cRDI_parallel_res_list <- list()
+  
+  # run RDI / cRDI for each sampled run
+  print(run_ids)
+  for(id in run_ids) {
+    message(id)
+    
+    subset_exprs_mat <- as.matrix(subset(data, V2 == id)[, -c(1:2)]) # remove first two columns: gene_name / run
+    noise = matrix(rnorm(mean = 0, sd = sd, nrow(subset_exprs_mat) * ncol(subset_exprs_mat)), nrow = nrow(subset_exprs_mat)) # add noise to break tie
+    
+    run_vec <- rep(1:1, each = ncol(subset_exprs_mat))
+    tmp <- expand.grid(1:nrow(subset_exprs_mat), 1:nrow(subset_exprs_mat), stringsAsFactors = F)
+    super_graph <- tmp[tmp[, 1] != tmp[, 2], ] - 1 # convert to C++ index
+    
+    subset_exprs_mat_noise <- subset_exprs_mat + noise
+    # subset_exprs_mat_noise <- subset_exprs_mat_noise - min(subset_exprs_mat_noise)
+    
+    a <- Sys.time() # calculate RDI
+    RDI_parallel_res <- calculate_rdi_cpp_wrap(t(subset_exprs_mat_noise), super_graph = as.matrix(super_graph), delays = c(1), turning_points = 0, method = 1)
+    b <- Sys.time()
+    
+    a <- Sys.time() # calculate cRDI
+    cRDI_parallel_res <- calculate_conditioned_rdi_cpp_wrap(t(subset_exprs_mat_noise), super_graph = as.matrix(super_graph),
+                                                            max_rdi_value = RDI_parallel_res$max_rdi_value, max_rdi_delays = RDI_parallel_res$max_rdi_delays, k = 1)
+    b <- Sys.time()
+    
+    # # make a list of list
+    RDI_parallel_res_list <- c(RDI_parallel_res_list, list(RDI_parallel_res$max_rdi_value))
+    cRDI_parallel_res_list <- c(cRDI_parallel_res_list, list(cRDI_parallel_res))
+  }
+  
+  # extract only the max_rdi_values
+  list_len <- length(RDI_parallel_res_list)
+  RDI_parallel_res_list <- RDI_parallel_res_list
+  RDI_res_df <- process_data(RDI_parallel_res_list); RDI_res_df <- t(do.call(rbind.data.frame, RDI_res_df))
+  cRDI_res_df <- process_data(cRDI_parallel_res_list); cRDI_res_df <- t(do.call(rbind.data.frame, cRDI_res_df))
+  
+  colnames(RDI_res_df) <- paste0("cluster_", 1:ncol(RDI_res_df))
+  colnames(cRDI_res_df) <- paste0("cluster_", 1:ncol(cRDI_res_df))
+  
+  # calculate the ROC / AUC values
+  RDI_df <- calROCAUC(RDI_res_df)
+  cRDI_df <- calROCAUC(cRDI_res_df)
+  
+  # return the results
+  return(list(RDI_df = RDI_df, cRDI_df = cRDI_df))
+}
+
+# calculate the ROC / AUC values RDI network (in columns) using the reference network 
+calROCAUC <- function(res_df, network = neuron_network) {
+  gene_uniq <- unique(c(as.character(neuron_network[, 1]), as.character(neuron_network[, 2])))
+  all_cmbns <- expand.grid(gene_uniq, gene_uniq)
+  valid_all_cmbns <- all_cmbns[all_cmbns$Var1 != all_cmbns$Var2, ]
+  valid_all_cmbns_df <- data.frame(pair = paste(tolower(valid_all_cmbns$Var1), tolower(valid_all_cmbns$Var2), sep = '_'), pval = 0)
+  row.names(valid_all_cmbns_df) <- valid_all_cmbns_df$pair
+  valid_all_cmbns_df[paste(tolower(neuron_network$V1), tolower(neuron_network$V2), sep = '_'), 2] <- 1
+  
+  reference_network_pvals <- valid_all_cmbns_df[, 2]
+  p_thrsld <- 0
+  
+  roc_df_list <- lapply(colnames(res_df), function(x, reference_network_pvals_df = reference_network_pvals) {
+    pvals <- res_df[, x]
+    
+    pvals[is.na(pvals)] <- 0
+    reference_network_pvals[is.na(reference_network_pvals)] <- 0
+    pvals <- (pvals - min(pvals)) / (max(pvals) - min(pvals))
+    res <- generate_roc_df(pvals, reference_network_pvals > p_thrsld)
+    colnames(res) <- c('tpr', 'fpr', 'auc')
+    cbind(res, method = x)
+  })
+  
+  roc_df_list <- lapply(roc_df_list, function(x) {colnames(x) <- c('tpr', 'fpr', 'auc', 'method'); x} )
+  roc_df <- do.call(rbind, roc_df_list)
+  
+  return(roc_df)  
+}
+
+# process the RDI / cRDI result for each sample so that we get a vector of RDI/cRDI values for each sample 
+process_data <- function(parallel_res_list, network = neuron_network, genes = c('Pax6', 'Mash1', 'Brn2', 'Zic1', 'Tuj1', 'Hes5', 'Scl', 'Olig2', 'Stat3', 'Myt1L', 'Aldh1L', 'Sox8', 'Mature')) {
+  if(nrow(parallel_res_list[[1]]) != length(genes))
+    stop("please provide the correct gene vector")
+  
+  processed_res <- lapply(parallel_res_list, function(x) {
+    gene_uniq <- unique(c(as.character(network$V1), as.character(network$V2)))
+    all_cmbns <- expand.grid(gene_uniq, gene_uniq)
+    valid_all_cmbns <- all_cmbns[all_cmbns$Var1 != all_cmbns$Var2, ]
+    all_valid_gene_pairs <- paste(tolower(valid_all_cmbns$Var1), tolower(valid_all_cmbns$Var2), sep = '_')
+    
+    dimnames(x) <- list(genes, genes)
+    mlt_RDI_benchmark_res <- melt(as.matrix(x)) # [1:12, 1:12]
+    row.names(mlt_RDI_benchmark_res) <- paste(tolower(mlt_RDI_benchmark_res$Var1), tolower(mlt_RDI_benchmark_res$Var2), sep = '_')
+    
+    t(data.frame(RDI = mlt_RDI_benchmark_res[all_valid_gene_pairs, 'value']))
+  })
+  return(processed_res)
+}
+
+# get the cell lineage by simply removing one character at a time 
+get_cell_lineage <- function(cell_id) {
+  if(cell_id == 'EMS') {
+    return(NA)
+  }
+  
+  cell_id_vec <- strsplit(cell_id, "")[[1]]
+  
+  cell_lineage_vec <- c()
+  for(i in 1:length(cell_id_vec)) {
+    cell_lineage_vec <- c(cell_lineage_vec, paste0(cell_id_vec[1:i], collapse = ''))
+  }
+  return(cell_lineage_vec)
+} 
+
+
+get_all_descedants <- function(cell_id, cds = c_elegans_cds) {
+  unique_cell_name <- unique(stringr::str_split_fixed(colnames(cds), "_", 2)[, 1])
+  
+  cell_lineage_vec <- unique_cell_name[grep(cell_id, unique_cell_name)]
+  
+  return(cell_lineage_vec)
+} 
+
+get_all_terminal_cells <- function(cds = c_elegans_cds) {
+  unique_cell_name <- unique(stringr::str_split_fixed(colnames(cds), "_", 2)[, 1])
+  
+  terminal_cells <- c()
+  for(current_cell in unique_cell_name) {
+    tmp <- grep(current_cell, unique_cell_name)
+    if(length(tmp) == 1) {
+      terminal_cells <- c(terminal_cells, current_cell)
+    }
+  }
+  
+  terminal_cells <- setdiff(terminal_cells, c('EMS', 'P1', 'P2', 'P3', 'P4'))
+  return(terminal_cells)
+}
+
+
+# assign each terminal cell the value on the x-axis: 
+assign_x_y_values <- function(all_terminal_cells = get_all_terminal_cells(), lineage_order = c('AB', 'MS', 'E', 'C', 'D', 'Z2', 'Z3')) {
+  ##########################################################################################################################
+  # prepare the data for making the graph 
+  ##########################################################################################################################
+  lineage_tree_df <- c() # c. elegans lineage tree 
+  
+  lineage_coord <- data.frame(x = rep(0, length(unique_cell_name) + 1), 
+                              y_min = rep(0, length(unique_cell_name) + 1), 
+                              y_max = rep(0, length(unique_cell_name) + 1), 
+                              row.names = c('P0', unique_cell_name))
+  
+  for(current_cell in all_terminal_cells) { # last six: P1, P2, P3, P4, Z2, Z3 
+    # message(paste('current_cell is', current_cell))
+    
+    valid_cells <- intersect(get_cell_lineage(current_cell), unique_cell_name)
+    
+    if(length(valid_cells) > 1) {
+      for(i in 1:(length(valid_cells) - 1) ) {
+        if(length(grep('E', valid_cells[i])) > 0) {
+          message(paste('current valid cells is', valid_cells[i]))
+        }
+        
+        if(is.null(nrow(lineage_tree_df))) {
+          lineage_tree_df <-  data.frame(father = valid_cells[i], target = valid_cells[i + 1])
+        }
+        lineage_tree_df <- rbind(lineage_tree_df, data.frame(father = valid_cells[i], target = valid_cells[i + 1]))
+      }
+    }
+  }
+  
+  # add missing edges and remove duplicates 
+  lineage_tree_df <- unique(lineage_tree_df)
+  missing <- data.frame(father = c('P0', "P0", "P1", "P1", "P2", "P2", "P3", "P3", "P4", "P4", "EMS", "EMS"), 
+                        target = c("AB", "P1", "EMS", "P2", "C", "P3", "D", "P4", "Z2", "Z3", "MS", "E") #,
+                        # weight = c(lineage_coord["AB", 'y_min'] - lineage_coord['P0', 'y_min'],
+                        #            lineage_coord["P1", 'y_min'] - lineage_coord['P0', 'y_min'],
+                        #            lineage_coord["EMS", 'y_min'] - lineage_coord['P1', 'y_min'],
+                        #            lineage_coord["P2", 'y_min'] - lineage_coord['P1', 'y_min'],
+                        #            lineage_coord["C", 'y_min'] - lineage_coord['P2', 'y_min'],
+                        #            lineage_coord["P3", 'y_min'] - lineage_coord['P2', 'y_min'],
+                        #            lineage_coord["D", 'y_min'] - lineage_coord['P3', 'y_min'],
+                        #            lineage_coord["P4", 'y_min'] - lineage_coord['P3', 'y_min'],
+                        #            lineage_coord["Z2", 'y_min'] - lineage_coord['P4', 'y_min'],
+                        #            lineage_coord["Z3", 'y_min'] - lineage_coord['P4', 'y_min'],
+                        #            lineage_coord["MS", 'y_min'] - lineage_coord["EMS", 'y_min'],
+                        #            lineage_coord["E", 'y_min'] - lineage_coord["EMS", 'y_min'])
+  )
+  
+  lineage_tree_df <- rbind(lineage_tree_df, missing)
+  lineage_tree_df <- unique(lineage_tree_df)
+  
+  lineage_tree <- graph_from_data_frame(lineage_tree_df, directed = T)
+  
+  ##########################################################################################################################
+  # assign coordinates for the x and y_min, y_max for each cell on the dendrogram
+  ##########################################################################################################################
+  
+  # assign x values 
+  cur_max <- 0
+  
+  message('assign x coordinate values ...')
+  
+  for(lineage in lineage_order) {
+    # assign each terminal cell the value on the x-axis: 
+    terminal_cells <- all_terminal_cells[grep(lineage, all_terminal_cells)]
+    
+    lineage_coord[terminal_cells, "x"] <- (cur_max + 1):(cur_max + length(terminal_cells))
+    cur_max <- max(lineage_coord$x)
+  }
+  
+  lineage_coord[c('Z2', "Z3"), "x"] <- (cur_max + 1):(cur_max + 2)
+  
+  # set up the x-coordinates for the remaining non-terminal cells: 
+  remaining_cells <- setdiff(unique_cell_name, all_terminal_cells)
+  # neighborhood.size( lineage_tree, vcount(lineage_tree),  remaining_cells, "out") - 1
+  reachable_cells_list <- graph.neighborhood(lineage_tree, 2 * nrow(lineage_coord), nodes = remaining_cells, 'out')
+  
+  # the non-terminal cells' x coordinate will be equal to the mean of the minimal and maximal reachable terminal cells 
+  remaining_cell_x_val <- lapply(reachable_cells_list, function(x) {
+    reachable_terminal_cells <- intersect(all_terminal_cells, V(x)$name)
+    mean(range(lineage_coord[reachable_terminal_cells, "x"], na.rm = T))
+  })
+  
+  lineage_coord[remaining_cells, 'x'] <- unlist(remaining_cell_x_val)
+  lineage_coord['P0', "x"] <- (lineage_coord['AB', "x"]  + lineage_coord['P1', "x"]) / 2
+  
+  # assign y values: 
+  message('assign y coordinate values ...')
+  PD <- pData(c_elegans_cds)
+  max_min_list <- lapply(row.names(lineage_coord), function(current_cell){
+    if(current_cell == 'MS') {
+      valid_cell_names <- row.names(PD)[grep("^MS_", row.names(PD))]
+    } else {
+      valid_cell_names <- row.names(PD)[grep(paste0(current_cell, "_"), row.names(PD))]
+    }
+    
+    if(current_cell == 'P0') {
+      data.frame(y_min = 0, 
+                 y_max = 0.5)
+    } else {
+      data.frame(y_min = min(PD[valid_cell_names, 'time'], na.rm = T), 
+                 y_max = max(PD[valid_cell_names, 'time'], na.rm = T))
+    }
+  })
+  max_min_df <- do.call(rbind, max_min_list)
+  lineage_coord$y_min <- max_min_df$y_min
+  lineage_coord$y_max <- max_min_df$y_max
+  
+  message('creating the data frame for making the dendrogram ...')
+  ddata <- apply(lineage_tree_df, 1, function(x) {
+    x1_x <- lineage_coord[x[1], 'x']
+    x2_x <- lineage_coord[x[2], 'x']
+    
+    y1_min <- lineage_coord[x[1], 'y_min']
+    y1_max <- lineage_coord[x[1], 'y_max']
+    y2_min <- lineage_coord[x[2], 'y_min']
+    y2_max <- lineage_coord[x[2], 'y_max']
+    
+    data.frame(father = rep(x[1], 3), target = rep(x[2], 3), x_start = c(x1_x, x1_x, x2_x),
+               x_end = c(x1_x, x2_x, x2_x), y_start = c(y1_min, (y1_max + y2_min) / 2, (y1_max + y2_min) / 2), y_end = c((y1_max + y2_min) / 2, (y1_max + y2_min) / 2, y2_max))
+  })
+  ddata <- unique(do.call(rbind, ddata))
+  
+  return(list(lineage_tree = lineage_tree, lineage_coord = lineage_coord, ddata = ddata))
+}
+
+
+clr_directed_R <- function(causality_mat) {
+  col_means <- colMeans(causality_mat)
+  col_sd <- apply(causality_mat, 2, sd)
+  col_sd[col_sd == 0] <- 1e-4
+  
+  causality_mat_cp_tmp <- lapply(1:nrow(causality_mat), function(x) {
+    row_i <- as.matrix(causality_mat)[x, ]
+    
+    row_sd <- sd(row_i) 
+    row_sd[row_sd == 0] <- 1e-4
+    s_i_vec <- pmax(0, (row_i - mean(row_i)) / row_sd)
+    s_j_vec <- pmax(0, (row_i - col_means) / col_sd) 
+    
+    sqrt(s_i_vec^2 + s_j_vec^2)
+  })
+  
+  causality_mat2 <- do.call(rbind, causality_mat_cp_tmp) 
+  dimnames(causality_mat2) <- dimnames(causality_mat)
+  
+  return(causality_mat2)
+}
+

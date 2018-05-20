@@ -1,0 +1,9 @@
+"0","# if you want to run this, please download bam files (and genes.refFlat) from
+# http://pklab.med.harvard.edu/velocyto/chromaffin/bams.tar
+# and extract it (\"tar xvf bams.tar\") in the working directory.
+# note: the file is fairly large - 5.6 GB! 
+path <- \"data/e12.5.bams\"
+files <- system(paste('find',path,'-name \"*unique.bam\" -print'),intern=T)
+names(files) <- gsub(\".*\\/(.*)_unique.bam\",\"\\1\",files)
+# parse gene annotation, annotate bam file reads
+dat <- read.smartseq2.bams(files,\"data/genes.refFlat\",n.cores=40)"

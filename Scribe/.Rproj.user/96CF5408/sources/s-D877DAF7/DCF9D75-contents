@@ -1,0 +1,412 @@
+# brew install python
+# which python2.7
+# sudo /usr/local/bin/python2.7 -m pip install -r requirements.txt 
+# /usr/local/bin/python2.7 setup.py install
+
+
+#install UMAP from https://github.com/lmcinnes/umap
+#install.packages("rPython")
+
+umap <- function(x,n_neighbors=10,n_component=2,min_dist=0.1,metric="euclidean"){
+  x <- as.matrix(x)
+  colnames(x) <- NULL
+  python.exec( c( "def umap(data,n,n_c,mdist,metric):",
+                  "\timport umap" ,
+                  "\timport numpy",
+                  "\tembedding = umap.UMAP(n_neighbors=n,n_components=n_c,min_dist=mdist,metric=metric).fit_transform(data)",
+                  "\tres = embedding.tolist()",
+                  "\treturn res"))
+
+  res <- python.call( "umap", x,n_neighbors,n_component,min_dist,metric)
+  do.call("rbind",res)
+}
+
+data(iris)
+res <- umap(iris[,1:4])
+
+
+library(rPython)
+python.exec(c("import sys", "\n", "print(sys.version)"))
+
+python.exec( c(  "def umap(data,n,mdist,metric):",
+              "\timport numpy", 
+              "\tfrom sklearn.datasets import load_digits",
+              "\tdigits = load_digits()",
+              "\tembedding = umap.UMAP(n_neighbors=5,min_dist=0.3,metric='correlation').fit_transform(digits.data)"))
+
+
+python.call( "umap", iris[,1:4],10,0.1,"euclidean")
+
+
+# trap103044:~ xqiu$ which R
+# /Users/xqiu/anaconda/bin/R
+
+# the procedure to install umap: 
+umap <- function(x,n_neighbors=10,n_component=2,min_dist=0.1,metric="euclidean"){
+  if(length(grep('Matrix', class(x))) > 0){
+    x <- as(as.matrix(x), 'TsparseMatrix')
+  }
+  # x <- as.matrix(x) # support sparse matrix
+  i <- x@i
+  j <- x@j
+  val <- x@x
+  dim <- x@Dim
+  rPython::python.exec( c( "def umap(i, j, val, dim, n,n_c,mdist,metric):",
+                  "\timport umap" ,
+                  "\timport numpy",
+                  "\tfrom scipy.sparse import csc_matrix",
+                  "\tdata = csc_matrix((val, (i, j)), shape=dim)",
+                  "\tembedding = umap.UMAP(n_neighbors=n,n_components=n_c,min_dist=mdist,metric=metric).fit_transform(data)",
+                  "\tres = embedding.tolist()",
+                  "\treturn res"))
+
+  res <- rPython::python.call( "umap", i, j, val, dim,n_neighbors,n_component,min_dist,metric, simplify = F)
+  do.call("rbind",res)
+}
+
+# adding all other parameters used in umap 
+umapM <- function(cds, n_neighbors = 10, n_component = 2, min_dist = 0.1, metric = "euclidean") {
+  x <- t(cds@assayData$exprs)
+  if(length(grep('Matrix', class(x))) == 0){
+    x <- as(as.matrix(x), 'TsparseMatrix')
+  } else {
+     x <- as(x, 'TsparseMatrix')
+  }
+
+  i <- x@i
+  j <- x@j
+  val <- log(x@x + 1)
+  dim <- x@Dim
+
+  rPython::python.exec( c( "def umap(i, j, val, dim, n, n_c,mdist, metric):",
+                  "\timport umap" ,
+                  "\timport numpy",
+                  "\tfrom scipy.sparse import csc_matrix",
+                  "\tdata = csc_matrix((val, (i, j)), shape = dim)",
+                  "\tembedding = umap.UMAP(n_neighbors = n, n_components = n_c, min_dist = mdist, metric = metric).fit_transform(data)",
+                  "\tres = embedding.tolist()",
+                  "\treturn res"))
+
+  res <- rPython::python.call( "umap", i, j, val, dim, n_neighbors, n_component, min_dist, metric, simplify = F)
+  do.call("rbind",res)
+}
+
+data(iris)
+res <- umap(iris[,1:4])
+
+lung <- load_lung()
+res <- umapM(lung)
+qplot(res[, 1], res[, 2], color = pData(lung)$Time)
+
+library(HSMMSingleCell)
+HSMM <- load_HSMM()
+res <- umapM(HSMM)
+qplot(res[, 1], res[, 2], color = pData(HSMM)$Hours)
+
+# the paul blood dataset: 
+load("/Users/xqiu/Dropbox (Personal)/Projects/Monocle2_revision/Jupyter_notebook/Paul_dataset_analysis_final.RData")
+res <- umapM(valid_subset_GSE72857_cds2)
+qplot(res[, 1], res[, 2], color = pData(valid_subset_GSE72857_cds2)$cell_type2)
+
+# read Lauren's data: 
+comb2_cds_mCh_cell <- readRDS('/Users/xqiu/Dropbox (Personal)/Projects/Monocle3/RData/comb2_cds_mCh_cell-ID.rds')
+
+res <- umapM(comb2_cds_mCh_cell)
+qplot(res[, 1], res[, 2], color = pData(comb2_cds_mCh_cell)$Cell_type)
+
+full_cds <- readRDS('/Users/xqiu/Dropbox (Personal)/Projects/Monocle3/RData/full_cds.rds')
+full_cds <- estimateDispersions(full_cds)
+disp_table <- dispersionTable(full_cds)
+ordering_genes <- subset(disp_table, mean_expression >= 0.1)
+full_cds <- setOrderingFilter(full_cds, ordering_genes$gene_id)
+
+start_time = Sys.time()
+full_res <- umapM(full_cds[fData(full_cds)$use_for_ordering == T, ], n_neighbors = 25) # # fData(full_cds)$use_for_ordering == T pData(full_cds)$condition == 'euth'
+end_time = Sys.time()
+end_time - start_time 
+
+qplot(full_res[, 1], full_res[, 2], color = pData(full_cds)$condition)
+
+# run Olsson data: 
+load('/Users/xqiu/Dropbox (Personal)/Projects/Monocle2_revision/RData/fig5_4_22.RData')
+full_res <- umapM(URMM_all_abs[fData(URMM_all_abs)$use_for_ordering, ], n_neighbors=8, min_dist=0.8, metric='cosine', n_component=4)
+qplot(full_res[, 1], full_res[, 2], color = pData(URMM_all_abs[, ])$Type) 
+
+full_res <- umapM(URMM_all_fig1b[fData(URMM_all_fig1b)$use_for_ordering, ], n_component=4)
+qplot(full_res[, 1], full_res[, 2], color = pData(URMM_all_fig1b[, ])$paper_cluster) 
+
+# neuron simualtion
+library(Scribe)
+data("neuron_network") # network data
+data("neuron_sim_cds") # network data
+data("na_sim_cds") # network data
+data("example_graph") # network data
+
+full_res <- umapM(na_sim_cds, n_neighbors=8, min_dist=0.8, metric='cosine', n_component=4)
+qplot(full_res[, 1], full_res[, 2], color = pData(na_sim_cds)$State)
+
+# run the phater data: 
+
+############################################################################################################################################
+# run the largeVis 
+############################################################################################################################################
+library(largeVis)
+
+largeDataset <- lung@assayData$exprs #full_cds@assayData$exprs # comb2_cds_mCh_cell@assayData$exprs
+largeDataset2 <- new("TsparseMatrix",
+          i = largeDataset@i,
+          j = largeDataset@j, x=largeDataset@x, Dim=largeDataset@Dim)
+largeDataset <- Matrix::sparseMatrix(i = largeDataset@i + 1,
+                                     j = largeDataset@j + 1, x=largeDataset@x, dims=largeDataset@Dim, giveCsparse = F)
+
+largeDataset <- spMatrix(1000,1000, i=sample(1:1000, 1000), j=sample(1:1000, 1000), x=sample(1:1000, 1000))
+T3 # only 3 non-zero entries, 5 = 1+4 !
+
+
+data <- as.matrix(largeDataset)
+data <- t(data)
+largeDataset <- Matrix(data, sparse = TRUE)
+
+neighbors <- randomProjectionTreeSearch(log(as(largeDataset, "CsparseMatrix") + 1), K = 10)
+
+largeDataset <- spMatrix(1000,1000, i=sample(1:1000, 1000), j=sample(1:1000, 1000), x=sample(1:1000, 1000))
+neighbors <- randomProjectionTreeSearch(log(largeDataset + 1), K = 10)
+
+edges <- buildEdgeMatrix(data = log(largeDataset + 1), neighbors = neighbors)
+rm(neighbors)
+gc()
+wij <- buildWijMatrix(edges)
+rm(edges)
+gc()
+coords <- projectKNNs(wij)
+
+qplot(coords[1, ], coords[2, ], color = pData(lung)$Time)
+
+############################################################################################################################################
+# run the umap from the top 50 PCA space  
+############################################################################################################################################
+load('/Users/xqiu/Dropbox (Personal)/Projects/Monocle3/June/cell_pca.RData')
+
+start <- Sys.time()
+cell_pca_ump <- umap(cell_pca[,5:34])
+end <- Sys.time()
+
+#> end - start
+# Time difference of 3.024691 hours
+cell_pca$umap_1 <- cell_pca_ump[, 1]; cell_pca$umap_2 <- cell_pca_ump[, 2]
+cell_pca$largevis_1 <- coords[1, ]; cell_pca$largevis_2 <- coords[2, ]
+
+col_vector <- c("#db83da",
+               "#53c35d",
+               "#a546bb",
+               "#83b837",
+               "#a469e6",
+               "#babb3d",
+               "#4f66dc",
+               "#e68821",
+               "#718fe8",
+               "#d6ac3e",
+               "#7957b4",
+               "#468e36",
+               "#d347ae",
+               "#5dbf8c",
+               "#e53e76",
+               "#42c9b8",
+               "#dd454a",
+               "#3bbac6",
+               "#d5542c",
+               "#59aadc",
+               "#cf8b36",
+               "#4a61b0",
+               "#8b8927",
+               "#a24e99",
+               "#9cb36a",
+               "#ca3e87",
+               "#36815b",
+               "#b23c4e",
+               "#5c702c",
+               "#b79add",
+               "#a55620",
+               "#5076af",
+               "#e38f67",
+               "#85609c",
+               "#caa569",
+               "#9b466c",
+               "#88692c",
+               "#dd81a9",
+               "#a35545",
+               "#e08083")
+cell_types <- c("Tendon and connective tissue progenitors", "Chondrocyte/osteoblast precursors", "Kidney mesenchyme", "Jaw and theet progenitors", "Granule neurons", "Epithelial cell", "Radial glia", "Early limb bud", "Neural progenitor cell", "Purkinje cell", "Oligodendrocytes ", "Midbrain/forebrain neuronal progenitors", "Myocyte", 
+  "Somites and spinal cord", "Neurosensory epithelium", "Premeiotic germ cells", "Granulocytes", "Hippocampus neurons", "Forebrain ", "Endothelial cells", "Chondroctyes ", "Definitive erythrocytes", "Erythroblasts", "Myelin cells ", "Schwann cells", "Limb mesenchyme", "Early craniofacial mesenchyme", "Embryonic erythrocytes", 
+  "Basal forebrain neurons", "Pyramidal neuron cell", "Hapatocytes", "Notochord cells ", "White blood cells ", "Ependymal cell", "Motor neurons", "Cardiac muscle lineages", "Megakaryocytes", "pigment epithelium of the retina", "Lens", "Neutrophils")
+names(col_vector) <- levels(cell_pca$Cluster)
+p_umap <- ggplot(data = cell_pca) + geom_point(aes(x = umap_1, y = umap_2, color = Cluster == 36), alpha = 0.2) + scale_color_manual(values = c('TRUE' = 'red', "FALSE" = 'gray') )
+p_umap <- ggplot(data = cell_pca) + geom_point(aes(x = umap_1, y = umap_2, color = Cluster), alpha = 0.2) + scale_color_manual(values = col_vector) + facet_wrap(~Cluster) + stat_density_2d(aes(x = umap_1, y = umap_2), alpha = 0.6)
+p_umap <- ggplot(data = cell_pca) + geom_point(aes(x = umap_1, y = umap_2, color = as.character(day)), alpha = 0.2) + facet_wrap(~Cluster) + stat_density_2d(aes(x = umap_1, y = umap_2), alpha = 0.6)
+p_umap <- ggplot(data = cell_pca) + geom_point(aes(x = umap_1, y = umap_2, color = Cluster), alpha = 0.2) + scale_color_manual(values = sex) + facet_wrap(~Cluster) + stat_density_2d(aes(x = umap_1, y = umap_2), alpha = 0.6)
+#viridis::scale_color_viridis(discrete = T, alpha = 0.5)
+p_tsne <- ggplot(data = cell_pca, aes(x = tsne_1, y = tsne_2)) + geom_point(aes(color = Cluster)) + scale_color_manual(values = col_vector) + facet_wrap(~Cluster) + stat_density_2d(aes(x = tsne_1, y = tsne_2), alpha = 0.6)
+  # viridis::scale_color_viridis(discrete = T, alpha = 0.5)
+p_largevis <- ggplot(data = cell_pca, aes(x = largevis_1, y = largevis_2)) + geom_point(aes(color = Cluster), alpha = 0.2) + scale_color_manual(values = col_vector)
+
+umap_centers <- cell_pca %>% dplyr::group_by(Cluster) %>% summarize(x = median(x = umap_1), 
+                                                                    y = median(x = umap_2))
+tsne_centers <- cell_pca %>% dplyr::group_by(Cluster) %>% summarize(x = median(x = tsne_1), 
+                                                                    y = median(x = tsne_2))
+largeVis_centers <- cell_pca %>% dplyr::group_by(Cluster) %>% summarize(x = median(x = largevis_1), 
+                                                                    y = median(x = largevis_2))
+
+p_umap <- p_umap + geom_point(data = umap_centers, mapping = aes(x = x, y = y), size = 0, alpha = 0) + 
+  geom_text(data = umap_centers, mapping = aes(x = x, y = y, label = Cluster), size = 4) 
+
+p_tsne <- p_tsne + geom_point(data = tsne_centers, mapping = aes(x = x, y = y), size = 0, alpha = 0) + 
+  geom_text(data = tsne_centers, mapping = aes(x = x, y = y, label = Cluster), size = 4)
+
+p_largevis <- p_largevis + geom_point(data = largeVis_centers, mapping = aes(x = x, y = y), size = 0, alpha = 0) + 
+  geom_text(data = largeVis_centers, mapping = aes(x = x, y = y, label = Cluster), size = 4)
+
+qplot(cell_pca_ump[, 1], cell_pca_ump[, 2])
+qplot(cell_pca_ump[, 1], cell_pca_ump[, 2])
+
+# read in the cell_stage_sex: 
+cell_stage_sex <- read.csv('/Users/xqiu/Dropbox (Personal)/Projects/Monocle3/June/cell_stage_sex.csv', row.names = 1)
+cell_pca$sex <- cell_stage_sex[row.names(cell_pca), 'sex']
+cell_pca$day <- cell_stage_sex[row.names(cell_pca), 'day']
+
+############################################################################################################################################
+# run the eb_epi lineage 
+############################################################################################################################################
+eb_epi_pca <- read.csv('/Users/xqiu/Dropbox (Personal)/Projects/Monocle3/June/PCA_matrix.csv', header = F)
+eb_epi_cluster <- read.csv('/Users/xqiu/Dropbox (Personal)/Projects/Monocle3/June/cluster_matrix.csv', header = F)
+
+eb_epi_umap_res <- umap(eb_epi_pca, n_component = 3)
+eb_epi_umap_res <- as.data.frame(eb_epi_umap_res[, 1:3])
+colnames(eb_epi_umap_res) <- c('umap_1', 'umap_2', 'umap_3')
+row.names(eb_epi_umap_res) <- eb_epi_cluster$V1
+eb_epi_umap_res$Cluster <- as.character(eb_epi_cluster$V2)
+eb_epi_umap_res$day <- as.factor(cell_stage_sex[row.names(eb_epi_umap_res), 'day'])
+
+qplot(umap_1, umap_2, data = eb_epi_umap_res, color = Cluster, alpha = 0.2)
+qplot(umap_1, umap_2, data = eb_epi_umap_res, color = day,  size = I(0.1))
+
+# show the relationship between the umap subset and full dataset umap 
+eb_epi_umap_res
+
+############################################################################################################################################
+# run the blood lineage 
+############################################################################################################################################
+# 20, 22, 23, 28, 33: 
+eb_epi_pca
+eb_epi_umap_res <- umap(eb_epi_pca, n_component = 3)
+eb_epi_umap_res <- as.data.frame(eb_epi_umap_res[, 1:3])
+colnames(eb_epi_umap_res) <- c('umap_1', 'umap_2', 'umap_3')
+row.names(eb_epi_umap_res) <- eb_epi_cluster$V1
+eb_epi_umap_res$Cluster <- as.character(eb_epi_cluster$V2)
+eb_epi_umap_res$day <- as.factor(cell_stage_sex[row.names(eb_epi_umap_res), 'day'])
+
+qplot(umap_1, umap_2, data = eb_epi_umap_res, color = Cluster, alpha = 0.2)
+qplot(umap_1, umap_2, data = eb_epi_umap_res, color = day,  size = I(0.1))
+
+############################################################################################################################################
+plot_df = eb_epi_umap_res
+library(RColorBrewer)
+library(animation)
+library(lattice)
+cols = brewer.pal(n = 5, name = "Paired")
+
+draw.plot <- function(angles)
+{
+  for(i in 1:length(angles))
+  {
+    print(cloud(umap_1 ~ umap_2 * umap_3, data = plot_df, shade = TRUE, distance=0,
+                screen=list(z=angles[i],x=-60), groups = day,
+                par.settings = list(axis.line = list(col = "transparent"),
+                                    superpose.symbol = list(col = cols, pch = 19)), 
+                xlab="",ylab="",zlab=""))
+    setTxtProgressBar(txtProgressBar(style=3),i/length(angles))
+  }
+}
+
+angles = seq(0, 360, 1)
+saveGIF(draw.plot(angles), interval = 0.025, ani.width = 550, 
+        ani.height = 550, movie.name = "scatter3D.gif")
+
+############################################################################################################################################
+# run umap with reticulate  
+############################################################################################################################################
+library(reticulate)
+main <- py_run_string("x = 10")
+main$x
+umap <- function(x,n_neighbors=10,min_dist=0.1,metric="euclidean"){
+  x <- as.matrix(x)
+  colnames(x) <- NULL
+  python.exec( c( "def umap(data,n,mdist,metric):",
+                  "\timport umap" ,
+                  "\timport numpy",
+                  "\tembedding = umap.UMAP(n_neighbors=n,min_dist=mdist,metric=metric).fit_transform(data)",
+                  "\tres = embedding.tolist()",
+                  "\treturn res"))
+  
+  res <- python.call( "umap", x,n_neighbors,min_dist,metric)
+  do.call("rbind",res)
+}
+
+umapM <- function(cds, n_neighbors = 10, n_component = 2, min_dist = 0.1, metric = "euclidean") {
+  x <- t(cds@assayData$exprs)
+  if(length(grep('Matrix', class(x))) == 0){
+    x <- as(as.matrix(x), 'TsparseMatrix')
+  } else {
+    x <- as(x, 'TsparseMatrix')
+  }
+  
+  i <- x@i
+  j <- x@j
+  val <- log(x@x + 1)
+  dim <- x@Dim
+  
+  rPython::python.exec( c( "def umap(i, j, val, dim, n, n_c,mdist, metric):",
+                           "\timport umap" ,
+                           "\timport numpy",
+                           "\tfrom scipy.sparse import csc_matrix",
+                           "\tdata = csc_matrix((val, (i, j)), shape = dim)",
+                           "\tembedding = umap.UMAP(n_neighbors = n, n_components = n_c, min_dist = mdist, metric = metric).fit_transform(data)",
+                           "\tres = embedding.tolist()",
+                           "\treturn res"))
+  
+  res <- rPython::python.call( "umap", i, j, val, dim, n_neighbors, n_component, min_dist, metric, simplify = F)
+  do.call("rbind",res)
+}
+
+umap <- py_eval(c( "def umap(i, j, val, dim, n, n_c, mdist, metric):",
+                         "\timport umap" ,
+                         "\timport numpy",
+                         "\tfrom scipy.sparse import csc_matrix",
+                         "\tdata = csc_matrix((val, (i, j)), shape = dim)",
+                         "\tembedding = umap.UMAP(n_neighbors = n, n_components = n_c, min_dist = mdist, metric = metric).fit_transform(data)",
+                         "\tres = embedding.tolist()",
+                         "\treturn res"))
+umap$x
+
+py_run_string(c( "def umap(i, j, val, dim, n, n_c, mdist, metric):",
+           "\timport umap" ,
+           "\timport numpy",
+           "\tfrom scipy.sparse import csc_matrix",
+           "\tdata = csc_matrix((val, (i, j)), shape = dim)",
+           "\tembedding = umap.UMAP(n_neighbors = n, n_components = n_c, min_dist = mdist, metric = metric).fit_transform(data)",
+           "\tres = embedding.tolist()",
+           "\treturn res"))
+# import numpy and speicfy no automatic Python to R conversion
+np <- import("numpy", convert = FALSE)
+
+# do some array manipulations with NumPy
+a <- np$array(c(1:4))
+sum <- a$cumsum()
+
+# convert to R explicitly at the end
+py_to_r(sum)
+
+
+
+
+
+

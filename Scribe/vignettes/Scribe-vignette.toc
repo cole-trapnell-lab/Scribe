@@ -1,0 +1,17 @@
+\contentsline {section}{\numberline {1}Introduction}{2}{section.1}
+\contentsline {section}{\numberline {2}Reconstructing causal network with Scribe for scRNA-seq experiment}{2}{section.2}
+\contentsline {subsection}{\numberline {2.1}Prepare the data for Scribe analysis}{2}{subsection.2.1}
+\contentsline {subsection}{\numberline {2.2}Visualize pairwise gene interaction}{3}{subsection.2.2}
+\contentsline {subsection}{\numberline {2.3}Visualize combinatorial gene regulation}{8}{subsection.2.3}
+\contentsline {subsection}{\numberline {2.4}Assess temporal causal gene regulation}{8}{subsection.2.4}
+\contentsline {subsection}{\numberline {2.5}Estimate time delay for gene pairs}{16}{subsection.2.5}
+\contentsline {subsection}{\numberline {2.6}Infer and visualize gene regulatory network}{17}{subsection.2.6}
+\contentsline {section}{\numberline {3}The Scribe object}{23}{section.3}
+\contentsline {subsection}{\numberline {3.1}The Scribe class: need to discuss}{23}{subsection.3.1}
+\contentsline {section}{\numberline {4}Relationship between Scribe and Monocle 2 as well as other relevant packages}{24}{section.4}
+\contentsline {section}{\numberline {5}Theory behind Scribe}{24}{section.5}
+\contentsline {subsection}{\numberline {5.1}Restricted direct information}{24}{subsection.5.1}
+\contentsline {subsection}{\numberline {5.2}Network sparsifier}{25}{subsection.5.2}
+\contentsline {section}{\numberline {6}Citation}{25}{section.6}
+\contentsline {section}{\numberline {7}Acknowledgements}{26}{section.7}
+\contentsline {section}{\numberline {8}Session Info}{26}{section.8}

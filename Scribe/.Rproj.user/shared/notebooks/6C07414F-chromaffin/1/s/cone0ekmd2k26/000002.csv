@@ -1,0 +1,5 @@
+"0","```r
+pca.velocity.plot(rvel,nPcs=5,plot.cols=2,cell.colors=ac(cell.colors,alpha=0.7),cex=1.2,pcount=0.1,pc.multipliers=c(1,-1,1,1,1))
+```"
+"1","log ... pca ... pc multipliers ... delta norm ... done
+"

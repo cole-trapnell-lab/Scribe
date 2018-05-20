@@ -1,0 +1,7 @@
+"0","```r
+# define custom pallet for expression magnitude
+gene.relative.velocity.estimates(emat,nmat,deltaT=1,kCells = 5,fit.quantile = 0.02,old.fit=rvel.qf,show.gene='Chga',cell.emb=emb,cell.colors=cell.colors)
+```"
+"1","calculating convolved matrices ... done
+[1] 1
+"

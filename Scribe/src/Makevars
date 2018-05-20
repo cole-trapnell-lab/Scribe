@@ -1,0 +1,32 @@
+PKG_CPPFLAGS = -Iann_1.1.2/include -I. -I..
+
+PKG_LIBS = -lstdc++ $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS) 
+# $(SHLIB_OPENMP_CXXFLAGS)
+
+# SOURCES = ann_1.1.2/src/ANN.cpp ann_1.1.2/src/brute.cpp ann_1.1.2/src/kd_tree.cpp ann_1.1.2/src/kd_util.cpp	ann_1.1.2/src/kd_split.cpp ann_1.1.2/src/kd_dump.cpp ann_1.1.2/src/kd_search.cpp ann_1.1.2/src/kd_pr_search.cpp ann_1.1.2/src/kd_fix_rad_search.cpp ann_1.1.2/src/bd_tree.cpp ann_1.1.2/src/bd_search.cpp ann_1.1.2/src/bd_pr_search.cpp ann_1.1.2/src/bd_fix_rad_search.cpp
+SOURCES = kde/kde.cpp
+
+OBJECTS= RcppExports.o information_estimator.o utility.o clr.o density.o $(SOURCES:.cpp=.o) 
+# ann_neighbor_radius.o neighbour.o radius_search.o
+
+all: $(SHLIB)
+
+clean:
+	@rm -f $(OBJECTS)
+#PKG_CXXFLAGS = $(SHLIB_OPENMP_CXXFLAGS) -I. -I..
+#PKG_LIBS = $(SHLIB_OPENMP_CXXFLAGS) $(LAPACK_LIBS) $(BLAS_LIBS) $(FLIBS)
+#CXX_STD = CXX11
+
+
+#PKG_CPPFLAGS = -Iann_1.1.2/include 
+
+#PKG_LIBS = -lstdc++
+
+#SOURCES = ann_1.1.2/src/ANN.cpp ann_1.1.2/src/brute.cpp ann_1.1.2/src/kd_tree.cpp ann_1.1.2/src/kd_util.cpp	ann_1.1.2/src/kd_split.cpp ann_1.1.2/src/kd_dump.cpp ann_1.1.2/src/kd_search.cpp ann_1.1.2/src/kd_pr_search.cpp ann_1.1.2/src/kd_fix_rad_search.cpp ann_1.1.2/src/bd_tree.cpp ann_1.1.2/src/bd_search.cpp ann_1.1.2/src/bd_pr_search.cpp ann_1.1.2/src/bd_fix_rad_search.cpp
+
+#OBJECTS= RcppExports.o InformationEstimator.o $(SOURCES:.cpp=.o) 
+
+#all: $(SHLIB)
+
+#clean:
+#	@rm -f $(OBJECTS)

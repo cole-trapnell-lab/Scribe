@@ -1,0 +1,27 @@
+"0","```r
+# start with unfiltered matrices, as we can use more genes in these types of estimates
+emat <- dat$emat; nmat <- dat$iomat; smat <- dat$smat;
+emat <- filter.genes.by.cluster.expression(emat,cell.colors,min.max.cluster.average = 7)
+gvel <- global.velcoity.estimates(emat, nmat, rvel, dat$base.df, smat=smat, deltaT=1, kCells=5, kGenes = 15, kGenes.trim = 5, min.gene.cells = 0, min.gene.conuts = 500)
+```"
+"1","filtered out 5 out of 9298 genes due to low emat levels
+filtered out 1103 out of 9293 genes due to insufficient exonic or intronic lengths
+filtered out 165 out of 8190 genes due to excessive nascent counts
+using relative slopes for 3752 genes to fit structure-based model ... 67.3% deviance explained.
+predicting gamma ... done
+refitting offsets ... calculating cell knn ... done
+calculating convolved matrices ... done
+fitting smat-based offsets ... done
+fitting gamma coefficients ... done. succesfful fit for 7912 genes
+filtered out 930 out of 7893 genes due to low nmat-smat correlation
+filtered out 911 out of 6963 genes due to low nmat-emat correlation
+filtered out 388 out of 6052 genes due to low nmat-emat slope
+calculating RNA velocity shift ... done
+calculating extrapolated cell state ... done
+re-estimated offsets for 6963 out of 8025 genes
+calculating convolved matrices ... done
+calculating gene knn ... done
+estimating M values ... adjusting mval offsets ... re-estimating gamma ... done
+calculating RNA velocity shift ... done
+calculating extrapolated cell state ... done
+"

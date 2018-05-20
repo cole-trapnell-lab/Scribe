@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "library(testthat)\nlibrary(Scribe)\n\ntest_check(\"Scribe\")\n",
+    "created" : 1507064855320.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4092577716",
+    "id" : "76A1CE6E",
+    "lastKnownWriteTime" : 1507064867,
+    "last_content_update" : 1507064867888,
+    "path" : "~/Dropbox (Personal)/Projects/Causal_network/causal_network/Cpp/Real_deal/Scribe/Scribe/tests/testthat.R",
+    "project_path" : "tests/testthat.R",
+    "properties" : {
+    },
+    "relative_order" : 8,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

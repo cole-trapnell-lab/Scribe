@@ -1,0 +1,6 @@
+"0","```r
+show.velocity.on.embedding.cor(emb,vel,n=100,scale='sqrt',cell.colors=ac(cell.colors,alpha=cell.alpha),cex=cell.cex,arrow.scale=arrow.scale,show.grid.flow=TRUE,min.grid.cell.mass=0.5,grid.n=20,arrow.lwd=2)
+```"
+"1","delta projections ... sqrt knn ... transition probs ... done
+calculating arrows ... grid estimates ... grid.sd= 1.731182  min.arrow.size= 0.03462363  max.grid.arrow.length= 0.09156871  done
+"

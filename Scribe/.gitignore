@@ -1,0 +1,5 @@
+inst/doc
+
+#Object files
+src/*.so
+src/*.o

@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "Package: Scribe\nType: Package\nTitle: Restricted direction information for network inference \nVersion: 0.1\nDate: 2017-06-09\nAuthor: ANN Library: David Mount, Sunil Arya (see src/ann_1.1.2/Copyright.txt). \n\t  flann Packge: http://www.cs.ubc.ca/research/flann/.\n\t  Scribe: Xiaojie Qiu, Arman Rahimzamani, Sreeram Kannan, Cole Trapnell\nMaintainer: Xiaojie Qiu <xqiut@uw.edu>\nDescription: Identifying the causal network for scRNA-seq experiment. Estimates the restricted direction information from one time series to another, where each time series consists of continuous random variables. The restricted direct information is an extension of mutual information which takes into account the direction of information flow, under the assumption that the underlying processes can be described by a first order Markov model. Mutual information is estimated using the Kraskov method, which builds on a nearest-neighbor framework (see package references).\nLicense: GPL (>= 2) | file LICENSE\nDepends:\n  R (>= 3.0.0)\nImports: Rcpp (>= 0.11.6),\n  monocle (>= 2.5.0),\n  HiveR (>= 0.3.42)\nLinkingTo: Rcpp, BH, RcppArmadillo, RANNinf\nURL: http://cole-trapnell-lab.github.io/\nNeedsCompilation: yes\nRepository: CRAN\nDate/Publication: 2017-06-09\nPackaged: 2017-06-09\nRoxygenNote: 6.0.1\nSuggests: testthat,\n    knitr,\n    rmarkdown,\n    rEDM (>= 0.5.4),\n    rccm,\n    scRNASeqSim, \n    vars (>= 1.5-2),\n    inflection (>= 1.3),\n    plotly (>= 4.6.0),\n    shiny (>= 1.0.3),\n    netbiov (>= 1.8.0),\n    arcdiagram (>= 0.1.11)\nVignetteBuilder: knitr\n",
+    "created" : 1507859610323.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1777625913",
+    "id" : "DBA582EE",
+    "lastKnownWriteTime" : 1508457690,
+    "last_content_update" : 1508457690749,
+    "path" : "~/Dropbox (Personal)/Projects/Causal_network/causal_network/Cpp/Real_deal/Scribe/Scribe/DESCRIPTION",
+    "project_path" : "DESCRIPTION",
+    "properties" : {
+    },
+    "relative_order" : 15,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "dcf"
+}

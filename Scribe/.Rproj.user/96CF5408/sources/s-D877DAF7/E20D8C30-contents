@@ -1,0 +1,23 @@
+library(phater)
+library(destiny)
+
+data(tree.data)
+tree.branches <- tree.data$branches
+tree.data <- tree.data[,1:60]
+
+# runs phate
+tree.phate <- phate(tree.data, 375, 15, 20, pca.method = 'none', mds.method = 'mmds')
+#> [1] "No PCA performed"
+#> [1] "MDS distance method: euclidean"
+#> [1] "No PCA performed"
+#> [1] "MDS method: mmds"
+# plot embedding
+palette(rainbow(10))
+plot(tree.phate$embedding[,1], tree.phate$embedding[,2], col = tree.branches, xlab = "phate1", ylab = "phate2")
+
+# run dpt for the analysis 
+dm <- DiffusionMap(tree.data)
+dpt_tree.phate <- phate(tree.data, 375, 15, 20, diff.op.t = as.numeric(dm@transitions), pca.method = 'none', mds.method = 'mmds')
+plot(dpt_tree.phate$embedding[,1], dpt_tree.phate$embedding[,2], col = tree.branches, xlab = "phate1", ylab = "phate2")
+
+load('/Users/xqiu/Dropbox (Personal)/Projects/Monocle3/June/cell_pca.RData')

@@ -1,0 +1,6 @@
+"0","```r
+vel <- rvel; arrow.scale=6; cell.alpha=0.4; cell.cex=1; fig.height=4; fig.width=4.5;
+show.velocity.on.embedding.cor(emb,vel,n=100,scale='sqrt',cell.colors=ac(cell.colors,alpha=cell.alpha),cex=cell.cex,arrow.scale=arrow.scale,arrow.lwd=1)
+```"
+"1","delta projections ... sqrt knn ... transition probs ... done
+"

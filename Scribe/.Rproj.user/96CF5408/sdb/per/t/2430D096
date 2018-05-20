@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "#include <Rcpp.h>\nusing namespace Rcpp;\n\ndouble di_single_run_cpp(NumericMatrix& x, NumericMatrix& y, int n = 5, bool uniformalize = false); \ndouble di_single_run_conditioned_cpp(NumericMatrix x, NumericMatrix y, NumericMatrix& z, int n = 5, bool uniformalize = false);\ndouble rdi_many_runs_cpp(NumericMatrix& x, NumericMatrix& y, bool uniformalize = false);\ndouble rdi_single_run_cpp(NumericMatrix& x, NumericMatrix& y, int d = 1, bool uniformalize = false);\ndouble lmi_single_run_cpp(NumericMatrix& x, NumericMatrix& y, int delay = 1, bool uniformalize = false) \ndouble lmi_multiple_run(NumericMatrix& x, NumericMatrix& y, int d = 1, IntegerVector run_vec = 0, bool uniformalize = false); \ndouble rdi_single_run_conditioned_cpp(NumericMatrix& x, NumericMatrix& y, NumericMatrix& z, NumericVector& z_delays, int d = 1, bool uniformalize = false);\nList extract_max_rdi_value_delay(NumericMatrix rdi_result, IntegerVector delays, bool uniformalize = false)\nList calculate_rdi_cpp(NumericMatrix& expr_data, IntegerVector delays, IntegerMatrix& super_graph, IntegerVector& turning_points, int method, bool uniformalize = false) //, method: 1 rdi; 2: lmi \nList extract_top_incoming_nodes_delays(NumericMatrix max_rdi_value, IntegerMatrix max_rdi_delays, int k = 1)\nNumericMatrix calculate_conditioned_rdi_cpp(NumericMatrix& expr_data, IntegerMatrix& super_graph, \n                                            NumericMatrix& max_rdi_value, IntegerMatrix& max_rdi_delays, int k = 5, bool uniformalize = false);\nNumericMatrix smooth_gene(NumericMatrix expr_data, const int window_size  = 40);\ndouble rdi_multiple_run_cpp(NumericMatrix& x, NumericMatrix& y, int d = 1, IntegerVector run_vec = 0, bool uniformalize = false); \nList calculate_rdi_multiple_run_cpp(NumericMatrix& expr_data, IntegerVector delays = 1, IntegerVector run_vec = 0, IntegerMatrix& super_graph, IntegerVector turning_points = 0, int method = 1, bool uniformalize = false); // = NULL \nNumericMatrix rdi_multiple_runs_conditioned_cpp(NumericMatrix& x, NumericMatrix& y, NumericMatrix& z, IntegerVector& z_delays, int d = 1, IntegerVector run_vec = 0, bool uniformalize = false);\nNumericMatrix calculate_conditioned_rdi_multiple_run_cpp(NumericMatrix& expr_data, IntegerMatrix& super_graph, \n                                            NumericMatrix& max_rdi_value, IntegerMatrix& max_rdi_delays, IntegerVector run_vec, int k = 5, bool uniformalize = false);\nNumericMatrix calculate_umi_cpp(NumericMatrix& expr_data, IntegerMatrix& super_graph, int k = 5, int method = 1, int k_density = 0, double bw = 0.0);",
+    "created" : 1507449933926.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "947545047",
+    "id" : "2430D096",
+    "lastKnownWriteTime" : 1507862688,
+    "last_content_update" : 1507862688789,
+    "path" : "~/Dropbox (Personal)/Projects/Causal_network/causal_network/Cpp/Real_deal/Scribe/Scribe/inst/include/utility.h",
+    "project_path" : "inst/include/utility.h",
+    "properties" : {
+    },
+    "relative_order" : 14,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "h"
+}

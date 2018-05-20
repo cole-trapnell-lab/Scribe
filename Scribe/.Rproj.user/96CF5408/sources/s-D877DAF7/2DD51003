@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1507158420116.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "2DD51003",
+    "lastKnownWriteTime" : 1516303326,
+    "last_content_update" : 1516303326,
+    "path" : "~/Dropbox (Personal)/Projects/Causal_network/causal_network/Cpp/Real_deal/Scribe/Scribe/R/plotting.R",
+    "project_path" : "R/plotting.R",
+    "properties" : {
+        "cursorPosition" : "1567,5",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 11,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

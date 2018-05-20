@@ -1,0 +1,6 @@
+"0","```r
+x <- show.velocity.on.embedding.eu(emb,vel,n=40,scale='sqrt',cell.colors=ac(cell.colors,alpha=cell.alpha),cex=cell.cex,nPcs=30,sigma=2.5,show.trajectories=TRUE,diffusion.steps=500,n.trajectory.clusters=15,ntop.trajectories=1,embedding.knn=T,control.for.neighborhood.density=TRUE,n.cores=40) 
+```"
+"1","sqrt scale ... reducing to 30 PCs ... distance ... sigma= 2.5  beta= 1  transition probs ... embedding kNN ... done
+simulating diffusion ... constructing path graph ... tracing shortest trajectories ... 
+"

@@ -1,0 +1,9 @@
+"0","```r
+rvel1 <- gene.relative.velocity.estimates(emat,nmat,deltaT=1,deltaT2 = 1,kCells = 1)
+```"
+"1","fitting gamma coefficients ... done. succesfful fit for 8646 genes
+filtered out 820 out of 8646 genes due to low nmat-emat correlation
+filtered out 496 out of 7826 genes due to low nmat-emat slope
+calculating RNA velocity shift ... done
+calculating extrapolated cell state ... done
+"

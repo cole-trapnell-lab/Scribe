@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1507157493495.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "BD2D13DB",
+    "lastKnownWriteTime" : 1516226290,
+    "last_content_update" : 1516226290,
+    "path" : "~/Dropbox (Personal)/Projects/Causal_network/causal_network/./Scripts/function.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "911,2",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 9,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

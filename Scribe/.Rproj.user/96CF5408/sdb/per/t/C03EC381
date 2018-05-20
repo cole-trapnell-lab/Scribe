@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#include <Rcpp.h>\nusing namespace Rcpp;\n\nNumericMatrix kde_cpp(NumericMatrix data, int k = 1, int b = 2, int pdf = 1, int density_sample_type = 1);",
+    "created" : 1507449925694.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3849658020",
+    "id" : "C03EC381",
+    "lastKnownWriteTime" : 1507336277,
+    "last_content_update" : 1507336277,
+    "path" : "~/Dropbox (Personal)/Projects/Causal_network/causal_network/Cpp/Real_deal/Scribe/Scribe/inst/include/density.h",
+    "project_path" : "inst/include/density.h",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 12,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "h"
+}

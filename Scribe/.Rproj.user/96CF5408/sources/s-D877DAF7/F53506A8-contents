@@ -1,0 +1,3 @@
+useDynLib(Scribe)
+exportPattern("^[[:alpha:]]+")
+importFrom(Rcpp, evalCpp)

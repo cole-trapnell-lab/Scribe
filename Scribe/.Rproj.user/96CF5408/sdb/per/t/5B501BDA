@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "#include <Rcpp.h>\nusing namespace Rcpp;\n\nList knn_density(NumericMatrix x, NumericMatrix y, int k = 5);\nNumericMatrix knn_density_2d(NumericVector x, NumericVector y, IntegerVector nGrids, int k = 5);\n\ndouble vd_cpp(const int d);\ndouble entropy_cpp(const NumericMatrix& x, int k = 5);\ndouble mi_cpp(const NumericMatrix& x, const NumericMatrix& y, int k = 5, int normalize = 0);\nList cmi_cpp(const NumericMatrix& x, const NumericMatrix& y, NumericMatrix z, int k = 5, int normalize = 0); //const NumericMatrix& z\nList ucmi_cpp(const NumericMatrix& x, const NumericMatrix& y, NumericMatrix z, int k = 5, int method = 1, int k_density = 0, double bw = 0); // const NumericMatrix& z,\ndouble umi_cpp(const NumericMatrix& x, const NumericMatrix& y, int k = 5, int method = 1, int k_density = 0, double bw = 0);\n// List ucmi_cpp(const NumericMatrix& x, const NumericMatrix& y, NumericMatrix z, int k, int method, int k_density, double bw, NumericVector weight); // const NumericMatrix& z, \n// double umi_cpp(const NumericMatrix& x, const NumericMatrix& y, int k = 5, int method = 1, int k_density = 0, double bw = 0, NumericVector weight = 0);\n",
+    "created" : 1507449927882.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2453135143",
+    "id" : "5B501BDA",
+    "lastKnownWriteTime" : 1507693435,
+    "last_content_update" : 1507693435900,
+    "path" : "~/Dropbox (Personal)/Projects/Causal_network/causal_network/Cpp/Real_deal/Scribe/Scribe/inst/include/information_estimator.h",
+    "project_path" : "inst/include/information_estimator.h",
+    "properties" : {
+    },
+    "relative_order" : 13,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "h"
+}
