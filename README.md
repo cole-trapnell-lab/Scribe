@@ -20,4 +20,5 @@ On Mac OS, you may confronted the error (*clang: error: linker command failed wi
 Xiaojie Qiu, Arman Rahimzamani, Li Wang, Qi Mao, Timothy Durham, Jose L McFaline-Figueroa, Lauren Saunders, Cole Trapnell, Sreeram Kannan (2018): Towards inferring causal gene regulatory networks from single cell expression measurements. BioRxiv
 
 biorxiv link: https://www.biorxiv.org/content/early/2018/09/25/426981
+
 twitter link: https://twitter.com/coletrapnell/status/1044986820520435712 
