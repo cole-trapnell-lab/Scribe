@@ -7,7 +7,8 @@ Single-cell transcriptome sequencing now routinely samples thousands of cells, p
 Note that this is still an alpha version of **Scribe**. Stable version of Scribe will be released when it is ready. Until then, please use **Scribe** with caution. We welcome any bugs reports of **Scribe** and any comments, suggestions regarding to our manuscript (See below). You can install this alpha version of **Scribe** via the following steps:
 
 ```sh
-# Scribe depends on RANNinf package, first clone the RANNinf package `git clone https://github.com/cole-trapnell-lab/RANNinf`
+# Scribe depends on RANNinf package, first clone the RANNinf package 
+# `git clone https://github.com/cole-trapnell-lab/RANNinf`
 # You can then cd to the parent folder of `RANNinf` and build and install it with the following command in the terminal: 
 R CMD build RANNinf # this build the RANNinf package and produce a file RANNinf_2.5.0.99.tar.gz
 R CMD install RANNinf_2.5.0.99.tar.gz # install the built RANNinf package, similar to the RANN package but the infinity norm is used 
