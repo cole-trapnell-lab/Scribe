@@ -8,13 +8,14 @@ Note that this is still an alpha version of **Scribe**. Stable version of Scribe
 
 ```sh
 # Scribe depends on RANNinf package, first clone the RANNinf package 
-# `git clone https://github.com/cole-trapnell-lab/RANNinf`
+git clone https://github.com/cole-trapnell-lab/RANNinf
 # You can then cd to the parent folder of `RANNinf` and build and install it with the following command in the terminal: 
 R CMD build RANNinf # this build the RANNinf package and produce a file RANNinf_2.5.0.99.tar.gz
 R CMD install RANNinf_2.5.0.99.tar.gz # install the built RANNinf package, similar to the RANN package but the infinity norm is used 
-# then clone the github repo with `git clone git@github.com:cole-trapnell-lab/Scribe.git`
+# then clone the github repo with 
+git clone git@github.com:cole-trapnell-lab/Scribe.git
 # then cd to the directory where the cloned github repo located
-R CMD install Scribe_0.1.tar.gz # install the built Scribe package. You may need to first install other required packages before successfully install Scribe 
+R CMD install Scribe_0.1.tar.gz # install the built Scribe package. 
 ```
 Package dependcies issues may incur when you try to install RANNinf or Scribe, you can easily install those packages from CRAN or bioconductor. 
 On Mac OS, you may confronted the error (*clang: error: linker command failed with exit code 1 (use -v to see invocation)*) wheny you try to install **Scribe**. That is because Scribe depends on gfortran and your system should use the updated gfortran. See https://thecoatlessprofessor.com/programming/rcpp-rcpparmadillo-and-os-x-mavericks--lgfortran-and--lquadmath-error/. 
