@@ -464,9 +464,9 @@ calculate_rdi_multiple_run <- function(cds_subset, run_vec = NULL, delays, super
   else
   {
     if(class(super_graph[1, 1]) != "character"){
-      if(max(super_graph) >  n_samples - 1 | min(super_graph) < 0)
+      if(max(super_graph) >  n_genes - 1 | min(super_graph) < 0)
       {
-        stop("super_graph should only include integer less than the number of cells (or only include gene names from genes_data)")
+        stop("super_graph should only include integer less than the number of genes (or only include gene names from genes_data)")
       }
     }
     else {
