@@ -4,7 +4,7 @@ Single-cell transcriptome sequencing now routinely samples thousands of cells, p
 
 ## Installation
 
-Note that this is still an alpha version of **Scribe**. Stable version of Scribe will be released when it is ready. Until then, please use **Scribe** with caution. We welcome any bugs reports of **Scribe** and any comments, suggestions regarding to our manuscript (See below). You can install this alpha version of **Scribe** via the following steps:
+Note that this is still an alpha version of **Scribe**. Stable version of **Scribe** will be released when it is ready. Until then, please use **Scribe** with caution. We welcome any bugs reports of **Scribe** and any comments, suggestions regarding to our manuscript (See below). You can install this alpha version of **Scribe** via the following steps:
 
 ```sh
 # Scribe depends on RANNinf package, first clone the RANNinf package 
@@ -17,7 +17,7 @@ git clone git@github.com:cole-trapnell-lab/Scribe.git
 # then cd to the directory where the cloned github repo located
 R CMD install Scribe_0.1.tar.gz # install the built Scribe package. 
 ```
-Package dependcies issues may incur when you try to install RANNinf or Scribe, you can easily install those packages from CRAN or bioconductor. 
+Package dependencies issues may incur when you try to install RANNinf or Scribe, you can easily install those packages from CRAN or bioconductor. 
 On Mac OS, you may confronted the error (*clang: error: linker command failed with exit code 1 (use -v to see invocation)*) wheny you try to install **Scribe**. That is because Scribe depends on gfortran and your system should use the updated gfortran. See https://thecoatlessprofessor.com/programming/rcpp-rcpparmadillo-and-os-x-mavericks--lgfortran-and--lquadmath-error/. 
 
 ## Citation
