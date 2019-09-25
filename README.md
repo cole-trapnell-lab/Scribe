@@ -21,7 +21,7 @@ Package dependencies issues may incur when you try to install RANNinf or Scribe,
 On Mac OS, you may confronted the error (*clang: error: linker command failed with exit code 1 (use -v to see invocation)*) wheny you try to install **Scribe**. That is because Scribe depends on gfortran and your system should use the updated gfortran. See https://thecoatlessprofessor.com/programming/rcpp-rcpparmadillo-and-os-x-mavericks--lgfortran-and--lquadmath-error/. 
 
 ## Citation
-Xiaojie Qiu, Arman Rahimzamani, Li Wang, Qi Mao, Timothy Durham, Jose L McFaline-Figueroa, Lauren Saunders, Cole Trapnell, Sreeram Kannan (2018): Towards inferring causal gene regulatory networks from single cell expression measurements. BioRxiv
+Xiaojie Qiu, Arman Rahimzamani, Li Wang, Qi Mao, Timothy Durham, José L McFaline-Figueroa, Lauren Saunders, Cole Trapnell, Sreeram Kannan (2018): Towards inferring causal gene regulatory networks from single cell expression measurements. BioRxiv
 
 biorxiv link: https://www.biorxiv.org/content/early/2018/09/25/426981
 
